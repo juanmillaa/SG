@@ -63,10 +63,19 @@ class TroncoScene extends THREE.Scene {
     // La geometría es una caja con muy poca altura
     var geometryGround = new THREE.BoxGeometry (2,0.02,2);
     
-    // El material se hará con una textura de madera
-    var texture = new THREE.TextureLoader().load('../imgs/wood.jpg');
-    var materialGround = new THREE.MeshStandardMaterial ({map: texture});
+    // // El material se hará con una textura de madera
+    // var texture = new THREE.TextureLoader().load('../imgs/wood.jpg');
+    // var materialGround = new THREE.MeshStandardMaterial ({map: texture});
     
+    const loader = new THREE.TextureLoader();
+
+    const materialGround = new THREE.MeshStandardMaterial({
+      map: loader.load("../texturas/TexturaCesped/DifuseCesped.png"),
+      normalMap: loader.load("../texturas/TexturaCesped/NormalCesped.png"),
+      roughnessMap: loader.load("../texturas/TexturaCesped/RoughCesped.png"),
+      displacementMap: loader.load("../texturas/TexturaCesped/DisplacementCesped.png"),
+      displacementScale: 0.05
+    });
     // Ya se puede construir el Mesh
     var ground = new THREE.Mesh (geometryGround, materialGround);
     

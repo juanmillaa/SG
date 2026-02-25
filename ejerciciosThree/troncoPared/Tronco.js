@@ -23,13 +23,23 @@ class Tronco extends THREE.Object3D {
   }
   
   createBase(tama) {
+    // const loader = new THREE.TextureLoader();
+
+    // // Cargar la textura desde URL o archivo local
+    // const textura = loader.load('../texturas/TexturaBaseTronco/Bark001.png');
+   
+    // // Crear material usando la textura
+    // const materialConTextura = new THREE.MeshStandardMaterial({ map: textura });
     const loader = new THREE.TextureLoader();
 
-    // Cargar la textura desde URL o archivo local
-    const textura = loader.load('../texturas/TexturaBaseTronco/Bark001.png');
-
-    // Crear material usando la textura
-    const materialConTextura = new THREE.MeshStandardMaterial({ map: textura });
+    const materialConTextura = new THREE.MeshStandardMaterial({
+      map: loader.load("../texturas/TexturaBaseTronco1/DifuseWood.png"),
+      normalMap: loader.load("../texturas/TexturaBaseTronco1/NormalWood.png"),
+      roughnessMap: loader.load("../texturas/TexturaBaseTronco1/RoughWood.png"),
+      displacementMap: loader.load("../texturas/TexturaBaseTronco1/DisplacementWood.png"),
+      displacementScale: 0.05
+    });
+  
 
 
     // El nodo del que van a colgar la caja y los 2 conos y que se va a devolver
@@ -65,9 +75,19 @@ class Tronco extends THREE.Object3D {
   
     createPunta(tama) {
   
+
+        const loader = new THREE.TextureLoader();
+
+      const materialConTextura = new THREE.MeshStandardMaterial({
+        map: loader.load("../texturas/TexturaPuntaTronco/DifusePunta.png"),
+        normalMap: loader.load("../texturas/TexturaPuntaTronco/NormalPunta.png"),
+        roughnessMap: loader.load("../texturas/TexturaPuntaTronco/RoughPunta.png"),
+        displacementMap: loader.load("../texturas/TexturaPuntaTronco/DisplacementPunta.png"),
+        displacementScale: 0.05
+      });
         const alturaCono = 0.75; // altura del cono
         const geometriaPunta = new THREE.ConeGeometry(tama * 0.5, alturaCono, SEGMENTOS_RADIALES);
-        const cono_punta = new THREE.Mesh(geometriaPunta, this.material);
+        const cono_punta = new THREE.Mesh(geometriaPunta, materialConTextura);
 
         // Mover el cono hacia arriba para que su base quede en y=0 del objeto punta
         cono_punta.position.y = alturaCono / 2;
