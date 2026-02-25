@@ -23,13 +23,7 @@ class Tronco extends THREE.Object3D {
   }
   
   createBase(tama) {
-    // const loader = new THREE.TextureLoader();
-
-    // // Cargar la textura desde URL o archivo local
-    // const textura = loader.load('../texturas/TexturaBaseTronco/Bark001.png');
-   
-    // // Crear material usando la textura
-    // const materialConTextura = new THREE.MeshStandardMaterial({ map: textura });
+    
     const loader = new THREE.TextureLoader();
 
     const materialConTextura = new THREE.MeshStandardMaterial({
@@ -76,7 +70,7 @@ class Tronco extends THREE.Object3D {
     createPunta(tama) {
   
 
-        const loader = new THREE.TextureLoader();
+      const loader = new THREE.TextureLoader();
 
       const materialConTextura = new THREE.MeshStandardMaterial({
         map: loader.load("../texturas/TexturaPuntaTronco/DifusePunta.png"),
