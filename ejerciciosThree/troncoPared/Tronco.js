@@ -1,4 +1,4 @@
-const SEGMENTOS_RADIALES = 64;
+const SEGMENTOS_RADIALES = 128;
 import * as THREE from 'three'
 
 class Tronco extends THREE.Object3D {
@@ -77,7 +77,7 @@ class Tronco extends THREE.Object3D {
         normalMap: loader.load("../texturas/TexturaPuntaTronco/NormalPunta.png"),
         roughnessMap: loader.load("../texturas/TexturaPuntaTronco/RoughPunta.png"),
         displacementMap: loader.load("../texturas/TexturaPuntaTronco/DisplacementPunta.png"),
-        displacementScale: 0.05
+        displacementScale: 0
       });
         const alturaCono = 0.75; // altura del cono
         const geometriaPunta = new THREE.ConeGeometry(tama * 0.5, alturaCono, SEGMENTOS_RADIALES);
