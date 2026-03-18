@@ -26,37 +26,63 @@ class Puerta extends THREE.Object3D {
     // Se crea la parte de la interfaz que corresponde a la grapadora
     // Se crea primero porque otros métodos usan las variables que se definen para la interfaz
     this.createGUI(gui,titleGui);
-    
+    const loader = new THREE.TextureLoader();
     // El material se usa desde varios métodos. Por eso se alamacena en un atributo
-    this.material = new THREE.MeshStandardMaterial({color: 0xCF0000});
-    
-    // A la base no se accede desde ningún método. Se almacena en una variable local del constructor
-    var base = this.createCuerpo(Puerta.tama);
-    // Al nodo que contiene la transformación interactiva que abre y cierra la grapadora se accede desde el método update, se almacena en un atributo.
-  this.movil = this.createMovil(Puerta.tama);
-
+    // this.material = new THREE.MeshStandardMaterial({color: 0xCF0000});
+    this.material = new THREE.MeshStandardMaterial({
+      map: loader.load("../imgs/daria-yakovleva-wood-2045379_640.jpg"),
+      normalMap: loader.load("../imgs/daria-yakovleva-wood-2045379_640.jpg"),
+      roughnessMap: loader.load("../imgs/daria-yakovleva-wood-2045379_640.jpg"),
+      displacementMap: loader.load("../imgs/daria-yakovleva-wood-2045379_640.jpg"),
+      displacementScale: 0.05
+    });
+    // 1. Creamos el contenedor "Móvil" que será la puerta entera
+  this.movil = new THREE.Object3D();
+  const cuerpo = this.createCuerpo(Puerta.tama);
+  const arco = this.createSemicircularDonut(Puerta.tama);
+  const pomo = this.createPomo(Puerta.tama);
+  // 2. Creamos las partes
+  this.movil.add(cuerpo);
+  this.movil.add(arco);
+  this.movil.add(pomo);
+  this.add(this.movil);
+  this.movil.position.set(0, 0, 0);
     // Al nodo  this, la grapadora, se le cuelgan como hijos la base y la parte móvil
-    this.add (base);
-    this.add (this.createSemicircularDonut(Puerta.tama));
-  this.add (this.movil);
   }
   
   createCuerpo(tama) {
     // El nodo del que van a colgar la caja y los 2 conos y que se va a devolver
     var cuerpo = new THREE.Object3D();
     // Cada figura, un Mesh, está compuesto de una geometría y un material
-    var cajaBase = new THREE.Mesh (new THREE.BoxGeometry (tama*2,tama*1.5,tama*0.2), this.material);
-    cajaBase.rotation.z = Math.PI/2;
-    cajaBase.position.y = tama;
+    var geometry = new THREE.BoxGeometry (tama*2,tama*1.4,tama*0.2);
+    var cajaBase = new THREE.Mesh (geometry,this.material);
+    // cajaBase.rotation.z = Math.PI/2;
+    geometry.rotateZ(Math.PI/2);
+    geometry.translate(tama*0.7,tama,0);
+
     cuerpo.add (cajaBase);
     return cuerpo;
   }
+
+createPomo(tama){
+  var k = 0.019;
+  var geometry = new THREE.TorusKnotGeometry( 1, 10, 267, 3,15,1 );
+  var torusKnot = new THREE.Mesh( geometry, this.material );
+  var pomo = new THREE.Object3D();
+  torusKnot.scale.set(tama*k,tama*k,tama*(k+0.025));
+  torusKnot.position.y = tama
+  torusKnot.position.x = tama - 0.1 + tama*0.7;
+  pomo.add(torusKnot);
+  return pomo;
+
+}
+
 createSemicircularDonut(tama) {
 
   const shape = new THREE.Shape();
 
-  const radioExterior = tama * 0.75;
-  const radioInterior = tama * 0.4;
+  const radioExterior = tama * 0.70;
+  const radioInterior = tama * 0.3;
 
   // --- CONTORNO EXTERIOR ---
   shape.absarc(0, 0, radioExterior, 0, Math.PI, false);
@@ -71,16 +97,14 @@ createSemicircularDonut(tama) {
 
   shape.holes.push(hole);
 
-  // --- EXTRUSIÓN ---
   const geometry = new THREE.ExtrudeGeometry(shape, {
     depth: tama * 0.2,
     bevelEnabled: false
   });
 
   geometry.center();
-
+  geometry.translate(tama*0.7,tama*2.3,0);
   const mesh = new THREE.Mesh(geometry, this.material);
-  mesh.position.y = tama * 2.3;
 
   return mesh;
 }
@@ -95,29 +119,14 @@ createSemicircularDonut(tama) {
     var folder = gui.addFolder (titleGui);
     // Estas lineas son las que añaden los componentes de la interfaz
     // Las tres cifras indican un valor mínimo, un máximo y el incremento
-    folder.add (this.guiControls, 'rotacion', -0.125, 0.2, 0.001)
+    folder.add (this.guiControls, 'rotacion', -Math.PI/2, Math.PI/2, 0.0001)
       .name ('Apertura : ')
       .onChange ( (value) => this.setAngulo (-value) );
   }
   
-  createMovil (tama) {
-    // Se crea la parte móvil
-    var cajaMovil = new THREE.Mesh (
-        new THREE.BoxGeometry (tama, tama*0.12, tama*0.2),
-        this.material
-    );
-    cajaMovil.position.set (-tama*0.45, tama*0.06, 0);
-    
-    var movil = new THREE.Object3D();
-    // // IMPORTANTE: Con independencia del orden en el que se escriban las 2 líneas siguientes, SIEMPRE se aplica primero la rotación y después la traslación. Prueba a intercambiar las dos líneas siguientes y verás que no se produce ningún cambio al ejecutar.    
-    movil.rotation.z = this.guiControls.rotacion;
-    movil.position.set(tama*0.45,tama*0.2,0);
-    movil.add(cajaMovil);
-    return movil;
-  }
   
   setAngulo (valor) {
-    this.movil.rotation.z = valor;
+    this.movil.rotation.y = valor;
   }
   
   update () {
