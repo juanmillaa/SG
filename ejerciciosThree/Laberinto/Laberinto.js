@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { Tronco } from '../troncoPared/Tronco.js'
+// import { Nucleo } from '../nucleoEnergia/Nucleo.js'
 class Laberinto extends THREE.Object3D {
 
   static WALL = "X";
@@ -42,6 +43,8 @@ class Laberinto extends THREE.Object3D {
 
               this.add(unBloque);
               break;
+           
+              
           }
         }
       }

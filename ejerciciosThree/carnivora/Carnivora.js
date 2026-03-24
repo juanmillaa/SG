@@ -52,7 +52,7 @@ class Carnivora extends THREE.Object3D {
 
 
     this.otra_hoja.rotation.y = Math.PI;
-    this.otra_hoja.position.y += 0.15*tamano;
+    this.otra_hoja.position.y += 0.15 * tamano;
 
     // Al nodo  this, la carnivora, se le cuelgan como hijos la base y la parte móvil
     this.add(this.base);
@@ -65,12 +65,13 @@ class Carnivora extends THREE.Object3D {
 
   }
 
- 
+
   createBase(tama) {
 
     var base = new THREE.Object3D();
 
     var mat = new THREE.MeshStandardMaterial({ color: 0xA0522D });
+    
     const matMaceta = new THREE.MeshStandardMaterial({
       color: 0xC06030,
       roughness: 0.9,
@@ -82,9 +83,9 @@ class Carnivora extends THREE.Object3D {
     var cajaBase = new CSG.Brush(geoExt, mat);
 
     // Cilindro interior (para vaciar)
-    var geoInt = new THREE.CylinderGeometry(tama * 0.3, tama * 0.3, ALTURA_BASE/2.0, 24);
+    var geoInt = new THREE.CylinderGeometry(tama * 0.3, tama * 0.3, ALTURA_BASE / 2.0, 24);
 
-    geoInt.translate(0, ALTURA_BASE/2.0, 0);
+    geoInt.translate(0, ALTURA_BASE / 2.0, 0);
 
     var cilInt = new CSG.Brush(geoInt, mat);
 
@@ -105,43 +106,39 @@ class Carnivora extends THREE.Object3D {
     // El nodo del que van a colgar la caja y los 2 conos y que se va a devolver
     var base = new THREE.Object3D();
     // Cada figura, un Mesh, está compuesto de una geometría y un material
-    const loader = new THREE.TextureLoader();
-    const materialConTextura = new THREE.MeshStandardMaterial({
-          map: loader.load("../texturas/TexturaPlanta/plant_difuse.png"),
-          normalMap: loader.load("../texturas/TexturaPlanta/plant_normal.png"),
-          roughnessMap: loader.load("../texturas/TexturaPlanta/plant_rough.png"),
-          displacementMap: loader.load("../texturas/TexturaPlanta/plant_displacement.png"),
-          displacementScale: 0.05
-        });
+    const textura = new THREE.TextureLoader().load('leaf.jpg');
+   
     const matTronco = new THREE.MeshStandardMaterial({
       color: 0x2E7D32,
       roughness: 0.7,
-      metalness: 0.1
+      metalness: 0.1,
+      map: textura
     });
     var cajaBase = new THREE.Mesh(new THREE.CylinderGeometry(tama * 0.1, tama * 0.1, ALTURA_TRONCO, SEGMENTOS_RADIALES), matTronco);
     cajaBase.position.y = ALTURA_TRONCO / 2;
 
 
-    base.position.set(0, (3.0/4.0)*ALTURA_BASE, 0);
+    base.position.set(0, (3.0 / 4.0) * ALTURA_BASE, 0);
     base.add(cajaBase);
     return base;
   }
 
-  createHoja(tama){
+  createHoja(tama) {
     var shape = new THREE.Shape();
-    shape.moveTo(0,0);
-    shape.quadraticCurveTo(0,0.15*tama,0.35*tama,0.15*tama);
-    shape.quadraticCurveTo(0.7*tama,0.15*tama,0.7*tama,0);
-    shape.quadraticCurveTo(0.7*tama,-0.15*tama,0.35*tama,-0.15*tama);
-    shape.quadraticCurveTo(0,-0.15*tama,0,0);
+    shape.moveTo(0, 0);
+    shape.quadraticCurveTo(0, 0.15 * tama, 0.35 * tama, 0.15 * tama);
+    shape.quadraticCurveTo(0.7 * tama, 0.15 * tama, 0.7 * tama, 0);
+    shape.quadraticCurveTo(0.7 * tama, -0.15 * tama, 0.35 * tama, -0.15 * tama);
+    shape.quadraticCurveTo(0, -0.15 * tama, 0, 0);
 
     var geometry = new THREE.ShapeGeometry(shape);
-    const mat = new THREE.MeshBasicMaterial( { color: 0x556B2F, side: THREE.DoubleSide } );
+    const textura = new THREE.TextureLoader().load('leaf.jpg');
+    const mat = new THREE.MeshBasicMaterial({ color: 0x556B2F, side: THREE.DoubleSide, map: textura });
     var hoja = new THREE.Mesh(geometry, mat);
-    hoja.position.x = tama*0.1;  // tama*0.1 es el radio del cilindro
-    hoja.position.y = ALTURA_TRONCO /2.0;
+    hoja.position.x = tama * 0.1;  // tama*0.1 es el radio del cilindro
+    hoja.position.y = ALTURA_TRONCO / 2.0;
 
-    hoja.rotation.x = Math.PI/3;
+    hoja.rotation.x = Math.PI / 3;
 
     var obj_hoja = new THREE.Object3D();
     obj_hoja.add(hoja);
@@ -178,25 +175,19 @@ class Carnivora extends THREE.Object3D {
       16,      // segmentos radiales
       false
     );
-    const loader = new THREE.TextureLoader();
-    const materialConTextura = new THREE.MeshStandardMaterial({
-          map: loader.load("../texturas/TexturaPlanta/plant_difuse.png"),
-          normalMap: loader.load("../texturas/TexturaPlanta/plant_normal.png"),
-          roughnessMap: loader.load("../texturas/TexturaPlanta/plant_rough.png"),
-          displacementMap: loader.load("../texturas/TexturaPlanta/plant_displacement.png"),
-          displacementScale: 0.05
-        });
+    const textura = new THREE.TextureLoader().load('leaf.jpg');
     const matTronco = new THREE.MeshStandardMaterial({
       color: 0x2E7D32,
       roughness: 0.7,
-      metalness: 0.1
+      metalness: 0.1,
+      map: textura
     });
     var mesh = new THREE.Mesh(geometry, matTronco);
 
     var giratorio = new THREE.Object3D();
 
     // IMPORTANTE → nace encima del tronco
-    giratorio.position.y = 0.8-0.01;   // CREAR CONSTANTE SIENDO ESTE LA ALTURA DE TRONCO  RRESTO EL 0.01 para que no se note separacion
+    giratorio.position.y = 0.8 - 0.01;   // CREAR CONSTANTE SIENDO ESTE LA ALTURA DE TRONCO  RRESTO EL 0.01 para que no se note separacion
 
     giratorio.add(mesh);
 
@@ -216,7 +207,9 @@ class Carnivora extends THREE.Object3D {
       2.2, Math.PI
     );
     geometry.translate(0, radio, 0);
+    const textura = new THREE.TextureLoader().load('flower.jpg');
     var mat = new THREE.MeshStandardMaterial({
+      map: textura,
       color: 0xffaaaa,
       side: THREE.DoubleSide
     });

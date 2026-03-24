@@ -52,24 +52,45 @@ class Nucleo extends THREE.Object3D {
 
 
     }
+ 
+
     createEsfera(tama) {
-        const geo = new THREE.SphereGeometry(0.5 * tama, SEGMENTOS_RADIALES, SEGMENTOS_RADIALES);
+        var radio = 0.5 * tama;
+        const geo = new THREE.SphereGeometry(radio, SEGMENTOS_RADIALES, SEGMENTOS_RADIALES);
 
         const textura = new THREE.TextureLoader().load('fire.jpg');
-
         this.material_esfera = new THREE.MeshStandardMaterial({
             map: textura,
             emissive: 0xff4500,         // naranja-rojizo
             emissiveMap: textura,
             emissiveIntensity: 2        // un poco más brillante
         });
-        const esf = new THREE.Mesh(geo, this.material_esfera);
-        const esfera = new THREE.Object3D();
 
-        esfera.add(esf);
-        return esfera;
+        var brush_esfera = new CSG.Brush(geo, this.material_esfera);
+
+        // Primer "cráter"
+        const geo_esfera_quitar = new THREE.SphereGeometry(0.5 * tama, SEGMENTOS_RADIALES, SEGMENTOS_RADIALES);
+        geo_esfera_quitar.scale(0.1 * tama, 0.5 * tama, 0.35 * tama);
+        geo_esfera_quitar.translate(radio, 0, 0);
+        var brush_esfera_quitar = new CSG.Brush(geo_esfera_quitar, this.material_esfera);
+
+        // Segundo "cráter"
+        const geo_esfera_quitar2 = new THREE.SphereGeometry(0.5 * tama, SEGMENTOS_RADIALES, SEGMENTOS_RADIALES);
+        geo_esfera_quitar2.scale(0.1 * tama, 0.5 * tama, 0.35 * tama);
+        geo_esfera_quitar2.translate(-radio, 0.3, 0);
+        var brush_esfera_quitar2 = new CSG.Brush(geo_esfera_quitar2, this.material_esfera); // <-- CORREGIDO
+
+        var evaluador = new CSG.Evaluator();
+
+        // Aplicar las sustracciones en orden
+        var crater = evaluador.evaluate(brush_esfera, brush_esfera_quitar, CSG.SUBTRACTION);
+        var crater_final = evaluador.evaluate(crater, brush_esfera_quitar2, CSG.SUBTRACTION);
+
+        var obj_final = new THREE.Object3D();
+        obj_final.add(crater_final);
+
+        return obj_final;
     }
-
     createAnillos(tama) {
 
         const puntos = [];
