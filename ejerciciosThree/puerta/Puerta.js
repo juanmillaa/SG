@@ -29,13 +29,13 @@ class Puerta extends THREE.Object3D {
     const loader = new THREE.TextureLoader();
     // El material se usa desde varios métodos. Por eso se alamacena en un atributo
     // this.material = new THREE.MeshStandardMaterial({color: 0xCF0000});
-    this.material = new THREE.MeshStandardMaterial({
-      map: loader.load("../imgs/daria-yakovleva-wood-2045379_640.jpg"),
-      normalMap: loader.load("../imgs/daria-yakovleva-wood-2045379_640.jpg"),
-      roughnessMap: loader.load("../imgs/daria-yakovleva-wood-2045379_640.jpg"),
-      displacementMap: loader.load("../imgs/daria-yakovleva-wood-2045379_640.jpg"),
-      displacementScale: 0.05
-    });
+    // this.material = new THREE.MeshStandardMaterial({
+    //   map: loader.load("../imgs/daria-yakovleva-wood-2045379_640.jpg"),
+    //   normalMap: loader.load("../imgs/daria-yakovleva-wood-2045379_640.jpg"),
+    //   roughnessMap: loader.load("../imgs/daria-yakovleva-wood-2045379_640.jpg"),
+    //   displacementMap: loader.load("../imgs/daria-yakovleva-wood-2045379_640.jpg"),
+    //   displacementScale: 0.05
+    // });
     // 1. Creamos el contenedor "Móvil" que será la puerta entera
   this.movil = new THREE.Object3D();
   const cuerpo = this.createCuerpo(Puerta.tama);
