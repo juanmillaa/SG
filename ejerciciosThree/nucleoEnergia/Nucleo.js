@@ -18,7 +18,7 @@ class Nucleo extends THREE.Object3D {
         this.materiales_anillos = [];
 
         // CAMBIAR AQUÍ EL TAMAÑO GENERAL
-        var tamano = 0.4;
+        var tamano = 1;
 
         this.esfera = this.createEsfera(tamano);
         this.anillo1 = this.createAnillos(tamano);

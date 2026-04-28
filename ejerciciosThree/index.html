@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Prácticas Sistemas Graficos</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+    }
+
+    h1 {
+      text-align: center;
+      padding: 20px;
+      color: #38bdf8;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 40px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.05);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      transition: 0.2s;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+      background: rgba(255,255,255,0.1);
+    }
+
+    a {
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+    }
+
+    a:hover {
+      color: #38bdf8;
+    }
+  </style>
+
+</head>
+<body>
+
+<h1>Mis prácticas WebGL</h1>
+
+<div class="grid">
+
+  <div class="card"><a href="carnivora/index.html">🌱 Carnívora</a></div>
+  <div class="card"><a href="nucleoEnergia/index.html">🔥 Núcleo</a></div>
+  <div class="card"><a href="mosca/index.html">🪰 Mosca</a></div>
+  <div class="card"><a href="llave/index.html">Llave</a></div>
+  <div class="card"><a href="puerta/index.html">🚪 Puerta</a></div>
+  <div class="card"><a href="troncoPared/index.html"> Tronco</a></div>
+  <div class="card"><a href="Laberinto/index.html">🧩 Laberinto</a></div>
+
+
+</div>
+
+</body>
+</html>
