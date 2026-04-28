@@ -1,28 +1,24 @@
 const SEGMENTOS_RADIALES = 64;
 const PI = 3.14;
 
-import * as THREE from 'three'
-import * as CSG from '../libs/three-bvh-csg.js'
-const ALTURA_BASE = 0.35;
-const ALTURA_TRONCO = 0.8;
+import * as THREE from 'three';
+import * as CSG from '../libs/three-bvh-csg.js';
 
 class Nucleo extends THREE.Object3D {
+
     constructor(gui, titleGui) {
         super();
 
-        // Se crea la parte de la interfaz que corresponde al nucleo
-        // Se crea primero porque otros métodos usan las variables que se definen para la interfaz
         this.createGUI(gui, titleGui);
 
-        // El material se usa desde varios métodos. Por eso se alamacena en un atributo
-        this.material = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+        this.material = new THREE.MeshStandardMaterial({
+            color: 0x228B22
+        });
 
         this.materiales_anillos = [];
 
-
-        // A la base no se accede desde ningún método. Se almacena en una variable local del constructor
-        var tamano = 1;   // 15 cm de largo. Las unidades son metros
-
+        // CAMBIAR AQUÍ EL TAMAÑO GENERAL
+        var tamano = 0.4;
 
         this.esfera = this.createEsfera(tamano);
         this.anillo1 = this.createAnillos(tamano);
@@ -33,179 +29,307 @@ class Nucleo extends THREE.Object3D {
         this.orb = this.createPuntos(tamano);
 
         this.add(this.esfera);
+
         this.esfera.add(this.anillo1);
         this.esfera.add(this.anillo2);
         this.esfera.add(this.anillo3);
         this.esfera.add(this.anillo4);
         this.esfera.add(this.anillo5);
         this.esfera.add(this.orb);
+
         this.orb.visible = false;
 
-
-        // opcional: posiciona cada anillo ligeramente distinto
+        // Rotaciones iniciales
         this.anillo2.rotation.x = Math.PI / 2;
         this.anillo3.rotation.z = Math.PI / 2;
         this.anillo4.rotation.z = Math.PI / 4;
         this.anillo5.rotation.z = Math.PI * 3 / 4;
-        this.esfera.position.y = 0.5 * tamano + 0.5;  // el +0.5 para que anillos no chquen suelo
 
-
-
+        // Altura proporcional
+        this.esfera.position.y = 1.0 * tamano;
     }
- 
 
     createEsfera(tama) {
-        var radio = 0.5 * tama;
-        const geo = new THREE.SphereGeometry(radio, SEGMENTOS_RADIALES, SEGMENTOS_RADIALES);
+
+        const radio = 0.5 * tama;
+
+        const geo = new THREE.SphereGeometry(
+            radio,
+            SEGMENTOS_RADIALES,
+            SEGMENTOS_RADIALES
+        );
 
         const textura = new THREE.TextureLoader().load('fire.jpg');
+
         this.material_esfera = new THREE.MeshStandardMaterial({
             map: textura,
-            emissive: 0xff4500,         // naranja-rojizo
+            emissive: 0xff4500,
             emissiveMap: textura,
-            emissiveIntensity: 2        // un poco más brillante
+            emissiveIntensity: 2
         });
 
-        var brush_esfera = new CSG.Brush(geo, this.material_esfera);
+        let resultado = new CSG.Brush(
+            geo,
+            this.material_esfera
+        );
 
-        // Primer "cráter"
-        const geo_esfera_quitar = new THREE.SphereGeometry(0.5 * tama, SEGMENTOS_RADIALES, SEGMENTOS_RADIALES);
-        geo_esfera_quitar.scale(0.1 * tama, 0.5 * tama, 0.35 * tama);
-        geo_esfera_quitar.translate(radio, 0, 0);
-        var brush_esfera_quitar = new CSG.Brush(geo_esfera_quitar, this.material_esfera);
+        const evaluador = new CSG.Evaluator();
 
-        // Segundo "cráter"
-        const geo_esfera_quitar2 = new THREE.SphereGeometry(0.5 * tama, SEGMENTOS_RADIALES, SEGMENTOS_RADIALES);
-        geo_esfera_quitar2.scale(0.1 * tama, 0.5 * tama, 0.35 * tama);
-        geo_esfera_quitar2.translate(-radio, 0.3, 0);
-        var brush_esfera_quitar2 = new CSG.Brush(geo_esfera_quitar2, this.material_esfera); // <-- CORREGIDO
+        const crateres = [
 
-        var evaluador = new CSG.Evaluator();
+            { x: radio, y: 0.00 * tama, z: 0.00 * tama, sx: 0.10, sy: 0.50, sz: 0.35 },
+            { x: -radio, y: 0.30 * tama, z: 0.00 * tama, sx: 0.10, sy: 0.50, sz: 0.35 },
 
-        // Aplicar las sustracciones en orden
-        var crater = evaluador.evaluate(brush_esfera, brush_esfera_quitar, CSG.SUBTRACTION);
-        var crater_final = evaluador.evaluate(crater, brush_esfera_quitar2, CSG.SUBTRACTION);
+            { x: 0.00, y: radio * 0.7, z: 0.10 * tama, sx: 0.18, sy: 0.22, sz: 0.18 },
+            { x: 0.00, y: -radio * 0.8, z: 0.00, sx: 0.20, sy: 0.16, sz: 0.20 },
 
-        var obj_final = new THREE.Object3D();
-        obj_final.add(crater_final);
+            { x: 0.30 * tama, y: 0.25 * tama, z: radio * 0.7, sx: 0.12, sy: 0.20, sz: 0.12 },
+            { x: -0.25 * tama, y: -0.15 * tama, z: -radio * 0.7, sx: 0.16, sy: 0.18, sz: 0.16 },
 
-        return obj_final;
+            { x: 0.18 * tama, y: -0.30 * tama, z: 0.28 * tama, sx: 0.08, sy: 0.14, sz: 0.08 },
+            { x: -0.22 * tama, y: 0.12 * tama, z: -0.24 * tama, sx: 0.07, sy: 0.12, sz: 0.07 },
+
+            { x: 0.35 * tama, y: 0.05 * tama, z: -0.20 * tama, sx: 0.11, sy: 0.16, sz: 0.11 },
+            { x: -0.32 * tama, y: -0.10 * tama, z: 0.22 * tama, sx: 0.09, sy: 0.15, sz: 0.09 }
+
+        ];
+
+        crateres.forEach(c => {
+
+            const g = new THREE.SphereGeometry(
+                0.5 * tama,
+                SEGMENTOS_RADIALES,
+                SEGMENTOS_RADIALES
+            );
+
+            g.scale(
+                c.sx * tama,
+                c.sy * tama,
+                c.sz * tama
+            );
+
+            g.translate(c.x, c.y, c.z);
+
+            const brush = new CSG.Brush(
+                g,
+                this.material_esfera
+            );
+
+            resultado = evaluador.evaluate(
+                resultado,
+                brush,
+                CSG.SUBTRACTION
+            );
+        });
+
+        const obj = new THREE.Object3D();
+        obj.add(resultado);
+
+        return obj;
     }
+
     createAnillos(tama) {
 
         const puntos = [];
-        const desplazamiento = 0.6 * tama; // esto es para que la circunferncia este centraada en (tama*desplazamiento, 0)
+
+        const desplazamiento = 0.6 * tama;
         const radioPequeno = 0.05 * tama;
 
         for (let i = 0; i <= 20; i++) {
+
             const theta = (i / 20) * Math.PI * 2;
-            const x = desplazamiento + Math.cos(theta) * radioPequeno;
-            const y = Math.sin(theta) * radioPequeno;
-            puntos.push(new THREE.Vector2(x, y));
-        }
 
-        const geometry = new THREE.LatheGeometry(puntos, 64);
+            const x =
+                desplazamiento +
+                Math.cos(theta) * radioPequeno;
 
-        const textura = new THREE.TextureLoader().load('fire.jpg');
+            const y =
+                Math.sin(theta) * radioPequeno;
 
-
-        const material = new THREE.MeshStandardMaterial({
-            map: textura,
-            emissive: 0xff4500,         // naranja-rojizo
-            emissiveMap: textura,
-            emissiveIntensity: 2        // un poco más brillante
-        });
-        this.materiales_anillos.push(material);
-        const anilloMesh = new THREE.Mesh(geometry, material);
-        const anillo = new THREE.Object3D();
-
-        anillo.add(anilloMesh);
-        return anillo;
-    }
-    createPuntos(tama) {
-        const particlesGeo = new THREE.BufferGeometry();
-        const vertices = [];
-
-        for (let i = 0; i < 200; i++) {
-            vertices.push(
-                (Math.random() - 0.5) * 2,
-                (Math.random() - 0.5) * 2,
-                (Math.random() - 0.5) * 2
+            puntos.push(
+                new THREE.Vector2(x, y)
             );
         }
 
-        particlesGeo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        const geometry =
+            new THREE.LatheGeometry(
+                puntos,
+                SEGMENTOS_RADIALES
+            );
 
-        const particlesMat = new THREE.PointsMaterial({
-            color: 0xffaa00,
-            size: 0.02
-        });
+        const textura =
+            new THREE.TextureLoader().load('fire.jpg');
 
-        const particles = new THREE.Points(particlesGeo, particlesMat);
+        const material =
+            new THREE.MeshStandardMaterial({
+                map: textura,
+                emissive: 0xff4500,
+                emissiveMap: textura,
+                emissiveIntensity: 2
+            });
 
-        return particles; // 👈 IMPORTANTE
+        this.materiales_anillos.push(material);
+
+        const anilloMesh =
+            new THREE.Mesh(
+                geometry,
+                material
+            );
+
+        const anillo =
+            new THREE.Object3D();
+
+        anillo.add(anilloMesh);
+
+        return anillo;
+    }
+
+    createPuntos(tama) {
+
+        const particlesGeo =
+            new THREE.BufferGeometry();
+
+        const vertices = [];
+
+        for (let i = 0; i < 200; i++) {
+
+            vertices.push(
+                (Math.random() - 0.5) * 2 * tama,
+                (Math.random() - 0.5) * 2 * tama,
+                (Math.random() - 0.5) * 2 * tama
+            );
+        }
+
+        particlesGeo.setAttribute(
+            'position',
+            new THREE.Float32BufferAttribute(
+                vertices,
+                3
+            )
+        );
+
+        const particlesMat =
+            new THREE.PointsMaterial({
+                color: 0xffaa00,
+                size: 0.02 * tama
+            });
+
+        const particles =
+            new THREE.Points(
+                particlesGeo,
+                particlesMat
+            );
+
+        return particles;
     }
 
     createGUI(gui, titleGui) {
+
         this.guiControls = {
             rotar: false,
             fuego: false
         };
 
-        var folder = gui.addFolder(titleGui);
-        folder.add(this.guiControls, 'rotar').name('Rotar anillos');
-        folder.add(this.guiControls, 'fuego').name('Modo fuego');
+        var folder =
+            gui.addFolder(titleGui);
+
+        folder.add(
+            this.guiControls,
+            'rotar'
+        ).name('Rotar anillos');
+
+        folder.add(
+            this.guiControls,
+            'fuego'
+        ).name('Modo fuego');
     }
+
     update() {
-        this.orb.visible = this.guiControls.fuego;
+
+        this.orb.visible =
+            this.guiControls.fuego;
+
         if (this.guiControls.rotar) {
+
             this.esfera.rotation.x += 0.01;
             this.esfera.rotation.y += 0.01;
+
             this.anillo1.rotation.x += 0.02;
             this.anillo2.rotation.z += 0.05;
             this.anillo3.rotation.z += 0.015;
-            this.anillo4.rotation.z += 0.01
-            this.anillo5.rotation.z += 0.018
+            this.anillo4.rotation.z += 0.01;
+            this.anillo5.rotation.z += 0.018;
         }
-        const scale = 1 + 0.1 * Math.sin(Date.now() * 0.005);
-        this.esfera.scale.set(scale, scale, scale);
+
+        const scale =
+            1 +
+            0.1 *
+            Math.sin(Date.now() * 0.005);
+
+        this.esfera.scale.set(
+            scale,
+            scale,
+            scale
+        );
 
         if (this.guiControls.fuego) {
+
             this.orb.rotation.y += 0.01;
             this.orb.rotation.x += 0.005;
-            // color naranja fuego progresivo
-            this.material_esfera.emissive.lerp(new THREE.Color(0xff4500), 0.05);
-            // subir intensidad poco a poco
-            this.material_esfera.emissiveIntensity = Math.min(
-                this.material_esfera.emissiveIntensity + 0.02,
-                3
+
+            this.material_esfera.emissive.lerp(
+                new THREE.Color(0xff4500),
+                0.05
             );
-            this.materiales_anillos.forEach(mat => {
-                mat.emissive.lerp(new THREE.Color(0xff4500), 0.05);
-                mat.emissiveIntensity = Math.min(
-                    mat.emissiveIntensity + 0.02,
+
+            this.material_esfera.emissiveIntensity =
+                Math.min(
+                    this.material_esfera.emissiveIntensity + 0.02,
                     3
                 );
+
+            this.materiales_anillos.forEach(mat => {
+
+                mat.emissive.lerp(
+                    new THREE.Color(0xff4500),
+                    0.05
+                );
+
+                mat.emissiveIntensity =
+                    Math.min(
+                        mat.emissiveIntensity + 0.02,
+                        3
+                    );
             });
 
         } else {
-            // volver a estado normal suavemente
-            this.material_esfera.emissive.lerp(new THREE.Color(0x000000), 0.05);
-            this.material_esfera.emissiveIntensity = Math.max(
-                this.material_esfera.emissiveIntensity - 0.02,
-                0
+
+            this.material_esfera.emissive.lerp(
+                new THREE.Color(0x000000),
+                0.05
             );
-            this.materiales_anillos.forEach(mat => {
-                mat.emissive.lerp(new THREE.Color(0x000000), 0.05);
-                mat.emissiveIntensity = Math.max(
-                    mat.emissiveIntensity - 0.02,
+
+            this.material_esfera.emissiveIntensity =
+                Math.max(
+                    this.material_esfera.emissiveIntensity - 0.02,
                     0
                 );
-            });
 
+            this.materiales_anillos.forEach(mat => {
+
+                mat.emissive.lerp(
+                    new THREE.Color(0x000000),
+                    0.05
+                );
+
+                mat.emissiveIntensity =
+                    Math.max(
+                        mat.emissiveIntensity - 0.02,
+                        0
+                    );
+            });
         }
     }
-
 }
 
-export { Nucleo }
+export { Nucleo };

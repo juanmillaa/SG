@@ -26,6 +26,7 @@ class Llave extends THREE.Object3D {
     this.add(cabeza);
     this.add(cuerpo);
     this.add(paleton);
+
   }
 
 createCabezaBarrido() {
