@@ -11,18 +11,19 @@ class Mosca extends THREE.Object3D {
     
     // El material se usa desde varios métodos. Por eso se alamacena en un atributo
     this.material = new THREE.MeshStandardMaterial({color: 0x000000});
-
+    this.tama = 5;
     this.cabezagirando = false;
     this.velocidadCabeceo = 0.01;
     this.angulocabeza = 0;
-
+    
     this.angulomincabeza = -Math.PI/6;
     this.angulomaxcabeza = Math.PI/6;
     this.sentidocabeceo = 1;
-
+    
     this.aleteo = false;
     this.anguloAleteo = -Math.PI / 3 ;
     this.velocidadAleteo = 1;
+    this.tamano = 0.3;   
     this.amplitudAlas = THREE.MathUtils.degToRad(10)
     this.anguloAlaMin = this.anguloAleteo - this.amplitudAlas;
     this.anguloAlaMax = this.anguloAleteo +  this.amplitudAlas;
@@ -37,7 +38,6 @@ class Mosca extends THREE.Object3D {
     this.cornetaScaleDireccion = 1;     // 1 = crecer, -1 = achicar
     
     // A la base no se accede desde ningún método. Se almacena en una variable local del constructor
-    this.tamano = 0.15;   // 15 cm de largo. Las unidades son metros
     this.cuerpo = this.createBase(this.tamano);
     this.cabeza = this.createHead(this.tamano);
     this.alas = this.createAlas(this.tamano);
@@ -54,6 +54,7 @@ class Mosca extends THREE.Object3D {
     this.cuerpo.add(this.patas);
     this.cabeza.add(this.ojos);
     this.cabeza.add(this.corneta);
+    this.scale.set(this.tama, this.tama, this.tama);
   }
   
   createBase(tama) {
@@ -213,9 +214,9 @@ createCorneta(tama) {
     // 1. Definición de la forma (igual que la tenías)
     const shape = new THREE.Shape();
     shape.moveTo(0, 0);
-    shape.bezierCurveTo(0.3, 0.4, 0.7, 0.9, 1.1, 1.0);
-    shape.bezierCurveTo(1.3, 0.8, 1.3, 0.2, 1.0, -0.2);
-    shape.bezierCurveTo(0.6, -0.6, 0.2, -0.4, 0, -0.1);
+    shape.bezierCurveTo(0.3* tama, 0.4* tama, 0.7* tama, 0.9* tama, 1.1* tama, 1.0* tama);
+    shape.bezierCurveTo(1.3* tama, 0.8* tama, 1.3* tama, 0.2* tama, 1.0* tama, -0.2* tama);
+    shape.bezierCurveTo(0.6* tama, -0.6* tama, 0.2* tama, -0.4* tama, 0, -0.1* tama);
     shape.lineTo(0, 0);
 
     const geometry = new THREE.ExtrudeGeometry(shape, {
@@ -236,7 +237,7 @@ createCorneta(tama) {
     const alaDerecha = new THREE.Mesh(geometry, material);
     
     // Aplicamos el escalado (corregido para evitar negativos)
-    let factor = (tama * 0.7); 
+    let factor = (tama * 3); 
 
     // -------- BORDES --------
     const edges = new THREE.EdgesGeometry(geometry);
@@ -251,21 +252,21 @@ createCorneta(tama) {
     };
 
     const line1 = crearLinea([
-        new THREE.Vector3(0, 0, 0.02),
-        new THREE.Vector3(0.5, 0.6, 0.02),
-        new THREE.Vector3(1.0, 0.8, 0.02)
+        new THREE.Vector3(0* tama, 0, 0.02* tama),
+        new THREE.Vector3(0.5* tama, 0.6* tama, 0.02* tama),
+        new THREE.Vector3(1.0* tama, 0.8* tama, 0.02* tama)
     ]);
 
     const line2 = crearLinea([
-        new THREE.Vector3(0, 0, 0.02),
-        new THREE.Vector3(0.6, 0.2, 0.02),
-        new THREE.Vector3(1.0, 0.3, 0.02)
+        new THREE.Vector3(0* tama, 0, 0.02* tama),
+        new THREE.Vector3(0.6* tama, 0.2* tama, 0.02* tama),
+        new THREE.Vector3(1.0* tama, 0.3* tama, 0.02* tama)
     ]);
 
     const line3 = crearLinea([
-        new THREE.Vector3(0, 0, 0.02),
-        new THREE.Vector3(0.5, -0.2, 0.02),
-        new THREE.Vector3(0.9, -0.1, 0.02)
+        new THREE.Vector3(0* tama, 0, 0.02* tama),
+        new THREE.Vector3(0.5* tama, -0.2* tama, 0.02* tama),
+        new THREE.Vector3(0.9* tama, -0.1* tama, 0.02* tama)
     ]);
 
     alaDerecha.add(line1, line2, line3);
