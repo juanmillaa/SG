@@ -5,7 +5,7 @@ class Llave extends THREE.Object3D {
     super();
     
     // 1. Configuración inicial
-    this.tama = 0.5; // El tamaño inicial que querías
+    this.tama = 0.15; // El tamaño inicial que querías
     
     this.material = new THREE.MeshStandardMaterial({
       color: 0xb59410,
@@ -19,12 +19,6 @@ class Llave extends THREE.Object3D {
     this.cabeza = this.createCabezaBarrido();
     this.paleton = this.createPaleton();
 
-<<<<<<< Updated upstream
-    this.add(cabeza);
-    this.add(cuerpo);
-    this.add(paleton);
-
-=======
     // 3. Añadimos todo al objeto (this)
     this.add(this.cuerpo);
     this.add(this.cabeza);
@@ -35,7 +29,6 @@ class Llave extends THREE.Object3D {
 
     // 5. Setup GUI
     this.createGUI(gui, titleGui);
->>>>>>> Stashed changes
   }
 
   createCuerpo() {
