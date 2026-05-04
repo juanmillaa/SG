@@ -2,7 +2,7 @@
 import * as THREE from 'three'
 
 class Puerta extends THREE.Object3D {
-  static #TAMA = 0.15;
+  static #TAMA = 0.6;
   static #CUERPO_DIMENSIONES;
 
   static {
@@ -51,12 +51,10 @@ class Puerta extends THREE.Object3D {
   static get tama() {
     return this.#TAMA;
   }
-  constructor(gui,titleGui) {
+  constructor() {
     super();
     
-    // Se crea la parte de la interfaz que corresponde a la grapadora
-    // Se crea primero porque otros métodos usan las variables que se definen para la interfaz
-    this.createGUI(gui,titleGui);
+ 
     const loader = new THREE.TextureLoader().load('../imgs/maderapuerta.jpg');
     this.material = new THREE.MeshStandardMaterial({
       map: loader,
@@ -106,6 +104,7 @@ this.materialesDonut = [this.materialTapa, this.materialBorde];
     var cuerpo = new THREE.Object3D();
     // Cada figura, un Mesh, está compuesto de una geometría y un material
     var geometry = new THREE.BoxGeometry (tama*2,tama*1.4,tama*0.2);
+    const textura = new THREE.TextureLoader().load('../nucleoEnergia/fire.jpg');
     var cajaBase = new THREE.Mesh (geometry,this.material);
     // cajaBase.rotation.z = Math.PI/2;
     geometry.rotateZ(Math.PI/2);

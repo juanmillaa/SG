@@ -1,11 +1,11 @@
 import * as THREE from 'three'
 
 class Llave extends THREE.Object3D {
-  constructor(gui, titleGui) {
+  constructor() {
     super();
     
     // 1. Configuración inicial
-    this.tama = 0.15; // El tamaño inicial que querías
+    this.tama = 0.5; // El tamaño inicial que querías
     
     this.material = new THREE.MeshStandardMaterial({
       color: 0xb59410,
@@ -27,8 +27,7 @@ class Llave extends THREE.Object3D {
     // 4. Aplicamos el escalado inicial al objeto completo
     this.scale.set(this.tama, this.tama, this.tama);
 
-    // 5. Setup GUI
-    this.createGUI(gui, titleGui);
+  
   }
 
   createCuerpo() {
@@ -90,26 +89,7 @@ class Llave extends THREE.Object3D {
     return mesh;
   }
 
-  createGUI(gui, titleGui) {
-    this.guiControls = {
-      rotacion: 0,
-      tamaño: this.tama
-    };
-
-    const folder = gui.addFolder(titleGui);
-    folder.add(this.guiControls, 'rotacion', 0, Math.PI * 2)
-      .name('Girar Llave')
-      .onChange((v) => { this.rotation.y = v; });
-
-    folder.add(this.guiControls, 'tamaño', 0.1, 2.0)
-      .name('Tamaño')
-      .onChange((v) => {
-        this.tama = v;
-        // Escalamos el objeto PADRE. Esto escala automáticamente cabeza, cuerpo y paletón
-        // sin que se separen entre ellos.
-        this.scale.set(v, v, v);
-      });
-  }
+ 
 
   update() {}
 }

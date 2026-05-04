@@ -24,8 +24,11 @@ class Laberinto extends THREE.Object3D {
     // para ir creando y añadiendo los bloques
     const loader = new THREE.FileLoader();
     loader.load(archivo, (file) => {
-      const laberintoMatriz = file.split(/\r?\n/);
-      laberintoMatriz.pop(); // La última fila está vacía
+      // const laberintoMatriz = file.split(/\r?\n/);
+      // laberintoMatriz.pop(); // La última fila está vacía
+      const laberintoMatriz = file
+      .split(/\r\n|\r|\n/)       // cubre todos los tipos de salto de línea
+      .filter(linea => linea.trim().length > 0); // elimina líneas vacías donde sea que estén
       this.xNumBloques = laberintoMatriz[0].length;
       this.zNumBloques = laberintoMatriz.length;
       var unBloque;

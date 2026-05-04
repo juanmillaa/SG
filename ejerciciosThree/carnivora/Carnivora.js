@@ -1,6 +1,4 @@
-
 const SEGMENTOS_RADIALES = 64;
-const PI = 3.14;
 
 import * as THREE from 'three';
 import * as CSG from '../libs/three-bvh-csg.js';
@@ -10,38 +8,34 @@ const ALTURA_TRONCO = 0.8;
 
 class Carnivora extends THREE.Object3D {
 
-  constructor(gui, titleGui) {
+  constructor() {
     super();
-
-    this.createGUI(gui, titleGui);
 
     this.material = new THREE.MeshStandardMaterial({
       color: 0x228B22
     });
 
-    this.girando = false;
-    this.anguloObjetivo = 0;
-    this.velocidadGiro = 0.02;
+    // 🔁 Animaciones activas por defecto
+    this.girando = true;
+    this.velocidadGiro = 0.01;
 
-    this.cabezaGirando = false;
-    this.velocidadCabeza = 0.01;
+    this.cabezaGirando = true;
+    this.velocidadCabeza = 0.005;
     this.anguloCentralCabeza = -Math.PI / 3;
 
-    const amplitud = THREE.MathUtils.degToRad(20);
-
+    const amplitud = THREE.MathUtils.degToRad(15);
     this.anguloMinCabeza = this.anguloCentralCabeza - amplitud;
     this.anguloMaxCabeza = this.anguloCentralCabeza + amplitud;
     this.direccionCabeza = 1;
 
-    this.lenguaEscalando = false;
+    this.lenguaEscalando = true;
     this.lenguaScaleFactor = 1;
     this.lenguaScaleMin = 0.5;
     this.lenguaScaleMax = 4.0;
     this.lenguaScaleSpeed = 0.01;
     this.lenguaScaleDireccion = 1;
 
-    // CAMBIA AQUI EL TAMAÑO
-    var tamano = 1;
+    var tamano = 0.5;
 
     this.base = this.createBase(tamano);
     this.tronco = this.createTronco(tamano);
@@ -69,10 +63,6 @@ class Carnivora extends THREE.Object3D {
 
     var base = new THREE.Object3D();
 
-    var mat = new THREE.MeshStandardMaterial({
-      color: 0xA0522D
-    });
-
     const matMaceta = new THREE.MeshStandardMaterial({
       color: 0xC06030,
       roughness: 0.9,
@@ -86,7 +76,7 @@ class Carnivora extends THREE.Object3D {
       SEGMENTOS_RADIALES
     );
 
-    var cajaBase = new CSG.Brush(geoExt, mat);
+    var cajaBase = new CSG.Brush(geoExt);
 
     var geoInt = new THREE.CylinderGeometry(
       tama * 0.3,
@@ -95,9 +85,9 @@ class Carnivora extends THREE.Object3D {
       24
     );
 
-    geoInt.translate(0, (alturaBase / 2), 0);
+    geoInt.translate(0, alturaBase / 2, 0);
 
-    var cilInt = new CSG.Brush(geoInt, mat);
+    var cilInt = new CSG.Brush(geoInt);
 
     var evaluador = new CSG.Evaluator();
 
@@ -121,7 +111,7 @@ class Carnivora extends THREE.Object3D {
 
     var base = new THREE.Object3D();
 
-    const textura = new THREE.TextureLoader().load('leaf.jpg');
+    const textura = new THREE.TextureLoader().load('../carnivora/leaf.jpg');
 
     const matTronco = new THREE.MeshStandardMaterial({
       color: 0x2E7D32,
@@ -130,7 +120,7 @@ class Carnivora extends THREE.Object3D {
       map: textura
     });
 
-    var cajaBase = new THREE.Mesh(
+    var tronco = new THREE.Mesh(
       new THREE.CylinderGeometry(
         tama * 0.1,
         tama * 0.1,
@@ -140,15 +130,11 @@ class Carnivora extends THREE.Object3D {
       matTronco
     );
 
-    cajaBase.position.y = alturaTronco / 2;
+    tronco.position.y = alturaTronco / 2;
 
-    base.position.set(
-      0,
-      (3 / 4) * ALTURA_BASE * tama,
-      0
-    );
+    base.position.set(0, (3 / 4) * ALTURA_BASE * tama, 0);
 
-    base.add(cajaBase);
+    base.add(tronco);
 
     return base;
   }
@@ -165,7 +151,7 @@ class Carnivora extends THREE.Object3D {
 
     var geometry = new THREE.ShapeGeometry(shape);
 
-    const textura = new THREE.TextureLoader().load('leaf.jpg');
+    const textura = new THREE.TextureLoader().load('../carnivora/leaf.jpg');
 
     const mat = new THREE.MeshBasicMaterial({
       color: 0x556B2F,
@@ -177,13 +163,12 @@ class Carnivora extends THREE.Object3D {
 
     hoja.position.x = tama * 0.1;
     hoja.position.y = (ALTURA_TRONCO * tama) / 2;
-
     hoja.rotation.x = Math.PI / 3;
 
-    var obj_hoja = new THREE.Object3D();
-    obj_hoja.add(hoja);
+    var obj = new THREE.Object3D();
+    obj.add(hoja);
 
-    return obj_hoja;
+    return obj;
   }
 
   createGiratorio(tama) {
@@ -193,12 +178,9 @@ class Carnivora extends THREE.Object3D {
 
     class TalloCurve extends THREE.Curve {
       getPoint(t, target = new THREE.Vector3()) {
-
         const x = t * altura;
         const y = Math.sqrt(t) * longitud;
-        const z = 0;
-
-        return target.set(x, y, z);
+        return target.set(x, y, 0);
       }
     }
 
@@ -212,27 +194,22 @@ class Carnivora extends THREE.Object3D {
       false
     );
 
-    const textura = new THREE.TextureLoader().load('leaf.jpg');
+    const textura = new THREE.TextureLoader().load('../carnivora/leaf.jpg');
 
-    const matTronco = new THREE.MeshStandardMaterial({
+    const material = new THREE.MeshStandardMaterial({
       color: 0x2E7D32,
-      roughness: 0.7,
-      metalness: 0.1,
       map: textura
     });
 
-    var mesh = new THREE.Mesh(geometry, matTronco);
+    var mesh = new THREE.Mesh(geometry, material);
 
     var giratorio = new THREE.Object3D();
-
-    giratorio.position.y =
-      ALTURA_TRONCO * tama - 0.01 * tama;
+    giratorio.position.y = ALTURA_TRONCO * tama - 0.01 * tama;
 
     giratorio.add(mesh);
 
     return giratorio;
   }
-
 
   createCabeza(tama) {
 
@@ -250,21 +227,19 @@ class Carnivora extends THREE.Object3D {
 
     geometry.translate(0, radio, 0);
 
-    const textura = new THREE.TextureLoader().load('flower.jpg');
+    const textura = new THREE.TextureLoader().load('../carnivora/flower.jpg');
 
-    var mat = new THREE.MeshStandardMaterial({
+    const material = new THREE.MeshStandardMaterial({
       map: textura,
-      color: 0xffaaaa,
       side: THREE.DoubleSide
     });
 
     const cabeza = new THREE.Object3D();
 
-    const sphere = new THREE.Mesh(geometry, mat);
+    const sphere = new THREE.Mesh(geometry, material);
 
     cabeza.rotation.z = -Math.PI / 3;
-    cabeza.position.y = 0.3 * tama;
-    cabeza.position.x = 0.45 * tama;
+    cabeza.position.set(0.45 * tama, 0.3 * tama, 0);
 
     cabeza.add(sphere);
 
@@ -273,28 +248,15 @@ class Carnivora extends THREE.Object3D {
 
   createLengua(tama) {
 
-    class CustomSinCurve extends THREE.Curve {
-
-      constructor(length = 3) {
-        super();
-        this.length = length;
-      }
-
-      getPoint(t, optionalTarget = new THREE.Vector3()) {
-
-        const tx = t * this.length - this.length / 2;
-        const ty = Math.sin(2 * Math.PI * t) * 0.1 * tama;
-        const tz = 0;
-
-        return optionalTarget.set(tx, ty, tz);
+    class Curva extends THREE.Curve {
+      getPoint(t, target = new THREE.Vector3()) {
+        const x = t * tama * 0.5 - tama * 0.25;
+        const y = Math.sin(2 * Math.PI * t) * 0.1 * tama;
+        return target.set(x, y, 0);
       }
     }
 
-    this.lenguaCurve = new CustomSinCurve(tama * 0.5);
-
-    this.lenguaMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff0000
-    });
+    this.lenguaCurve = new Curva();
 
     this.lenguaGeometry = new THREE.TubeGeometry(
       this.lenguaCurve,
@@ -309,7 +271,7 @@ class Carnivora extends THREE.Object3D {
 
     this.lenguaMesh = new THREE.Mesh(
       this.lenguaGeometry,
-      this.lenguaMaterial
+      new THREE.MeshBasicMaterial({ color: 0xff0000 })
     );
 
     const lengua = new THREE.Object3D();
@@ -317,118 +279,34 @@ class Carnivora extends THREE.Object3D {
 
     return lengua;
   }
-  girar180() {
-    this.girando = true;
-    this.anguloObjetivo += Math.PI;
-  }
-  parar() {
-    this.girando = false;
-  }
-
-  empezarCabeza() {
-    this.cabezaGirando = true;
-  }
-
-  pararCabeza() {
-    this.cabezaGirando = false;
-  }
-
-  animarLengua() {
-    this.lenguaEscalando = true;
-  }
-
-  createGUI(gui, titleGui) {
-
-    this.guiControls = {
-      girar: () => this.girar180(),
-      parar: () => this.parar(),
-      empezarCabeza: () => this.empezarCabeza(),
-      pararCabeza: () => this.pararCabeza(),
-      alargarLengua: () => this.animarLengua()
-    };
-
-    var folder = gui.addFolder(titleGui);
-
-    folder.add(this.guiControls, 'girar')
-      .name('Girar 180°');
-
-    folder.add(this.guiControls, 'parar')
-      .name('Parar');
-
-    folder.add(this.guiControls, 'empezarCabeza')
-      .name('Mover cabeza');
-
-    folder.add(this.guiControls, 'pararCabeza')
-      .name('Parar cabeza');
-
-    folder.add(this.guiControls, 'alargarLengua')
-      .name('Animar lengua');
-  }
-
 
   update() {
 
-    if (this.lenguaEscalando) {
+    // 👅 Lengua
+    this.lenguaScaleFactor +=
+      this.lenguaScaleDireccion * this.lenguaScaleSpeed;
 
-      this.lenguaScaleFactor +=
-        this.lenguaScaleDireccion *
-        this.lenguaScaleSpeed;
-
-      if (this.lenguaScaleFactor >= this.lenguaScaleMax) {
-        this.lenguaScaleFactor = this.lenguaScaleMax;
-        this.lenguaScaleDireccion = -1;
-      }
-      else if (this.lenguaScaleFactor <= this.lenguaScaleMin) {
-        this.lenguaScaleFactor = this.lenguaScaleMin;
-        this.lenguaScaleDireccion = 1;
-      }
-
-      this.lenguaMesh.scale.set(
-        1,
-        this.lenguaScaleFactor,
-        1
-      );
+    if (this.lenguaScaleFactor >= this.lenguaScaleMax) {
+      this.lenguaScaleDireccion = -1;
+    } else if (this.lenguaScaleFactor <= this.lenguaScaleMin) {
+      this.lenguaScaleDireccion = 1;
     }
 
-    if (this.girando) {
+    this.lenguaMesh.scale.set(1, this.lenguaScaleFactor, 1);
 
-      let diferencia =
-        this.anguloObjetivo -
-        this.giratorio.rotation.y;
+    // 🔁 Giro continuo
+    this.giratorio.rotation.y += this.velocidadGiro;
 
-      if (Math.abs(diferencia) > 0.01) {
+    // 🌿 Cabeza oscilante
+    this.cabeza.rotation.z +=
+      this.direccionCabeza * this.velocidadCabeza;
 
-        this.giratorio.rotation.y +=
-          Math.sign(diferencia) *
-          this.velocidadGiro;
-      }
-      else {
-        this.giratorio.rotation.y =
-          this.anguloObjetivo;
-
-        this.girando = false;
-      }
+    if (this.cabeza.rotation.z > this.anguloMaxCabeza) {
+      this.direccionCabeza = -1;
     }
 
-    if (this.cabezaGirando) {
-
-      this.cabeza.rotation.z +=
-        this.direccionCabeza *
-        this.velocidadCabeza;
-
-      if (this.cabeza.rotation.z > this.anguloMaxCabeza) {
-        this.cabeza.rotation.z =
-          this.anguloMaxCabeza;
-
-        this.direccionCabeza = -1;
-      }
-
-      if (this.cabeza.rotation.z < this.anguloMinCabeza) {
-        this.cabeza.rotation.z =
-          this.anguloMinCabeza;
-
-        this.direccionCabeza = 1;
-      }
+    if (this.cabeza.rotation.z < this.anguloMinCabeza) {
+      this.direccionCabeza = 1;
     }
   }
 }

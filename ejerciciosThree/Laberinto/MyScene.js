@@ -8,7 +8,11 @@ import { TrackballControls } from 'trackball'
 // Clases de mi proyecto
 
 import { Laberinto } from './Laberinto.js'
-
+import { Nucleo } from '../nucleoEnergia/Nucleo.js';
+import { Carnivora } from '../carnivora/Carnivora.js';
+import { Mosca } from '../mosca/Mosca.js';
+import { Llave } from '../llave/Llave.js';
+import { Puerta } from '../puerta/Puerta.js';
  
 /// La clase fachada del modelo
 /**
@@ -20,6 +24,7 @@ class MyScene extends THREE.Scene {
   // la visualización de la escena
   constructor (myCanvas) { 
     super();
+    
     
     // Lo primero, crear el visualizador, pasándole el lienzo sobre el que realizar los renderizados.
     this.renderer = this.createRenderer(myCanvas);
@@ -52,11 +57,41 @@ class MyScene extends THREE.Scene {
     this.add (this.laberinto);
     laberintoCargado.done (() => {
       console.log ("Este bloque no se ejecuta hasta que se resuelve la variable de sincronización");
-      const pickUp = new THREE.Mesh (new THREE.SphereGeometry (0.5), new THREE.MeshNormalMaterial());
-      this.add (pickUp);
-      this.laberinto.getMundoFromCelda(4,6,pickUp.position); 
-      // El método solo ha puesto la posicion x, z. Nos queda la posición y
-      pickUp.position.y = 1;
+      
+
+
+      this.nucleo = new Nucleo(null, "nucleo");
+      this.add(this.nucleo);
+
+      this.laberinto.getMundoFromCelda(3, 5, this.nucleo.position);
+      this.nucleo.position.y = 0.75;
+
+      this.carnivora = new Carnivora();
+      this.add(this.carnivora);
+
+      this.laberinto.getMundoFromCelda(13, 15, this.carnivora.position);
+      this.carnivora.position.y = 0;
+
+      this.mosca = new Mosca();
+      this.add(this.mosca);
+
+      this.laberinto.getMundoFromCelda(8, 17, this.mosca.position);
+      this.mosca.position.y = 1.5; 
+
+      this.llave = new Llave();
+      this.add(this.llave);
+
+      this.laberinto.getMundoFromCelda(15, 20, this.llave.position);
+      this.llave.position.y = 0; 
+
+      this.puerta = new Puerta();
+      this.add(this.puerta);
+
+      this.laberinto.getMundoFromCelda(1, 24, this.puerta.position);
+      this.puerta.position.y = 0;
+      
+      this.puerta.rotation.y = Math.PI / 2; 
+      this.puerta.position.z+=0.5;
     });
   }
   
@@ -222,7 +257,16 @@ class MyScene extends THREE.Scene {
     
     // Se actualiza el resto del modelo
     this.laberinto.update();
-    
+    if (this.carnivora) {
+      this.carnivora.update();
+    }
+    if (this.nucleo) {
+      this.nucleo.update();
+    }
+
+    if (this.mosca) {
+      this.mosca.update();
+    }
     // Este método debe ser llamado cada vez que queramos visualizar la escena de nuevo.
     // Literalmente le decimos al navegador: "La próxima vez que haya que refrescar la pantalla, llama al método que te indico".
     // Si no existiera esta línea,  update()  se ejecutaría solo la primera vez.
