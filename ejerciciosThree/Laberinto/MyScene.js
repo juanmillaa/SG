@@ -1,671 +1,4 @@
-// // Clases de la biblioteca
-// import * as THREE from 'three'
-// import { FirstPersonControls } from '../libs/FirstPersonControls.js'
 
-// // Clases de mi proyecto
-// import { Laberinto } from './Laberinto.js'
-// import { Nucleo } from '../nucleoEnergia/Nucleo.js';
-// import { Carnivora } from '../carnivora/Carnivora.js';
-// import { Mosca } from '../mosca/Mosca.js';
-// import { Llave } from '../llave/Llave.js';
-// import { Puerta } from '../puerta/Puerta.js';
-
-// class MyScene extends THREE.Scene {
-//   constructor(myCanvas) {
-//     super();
-
-//     // Contadores
-//     this.pickupsRecogidos = [];
-//     this.totalPickups = 4;
-//     this.puertaAbierta = false;
-//     this.pickups = [];
-
-//     // Colisiones — radio y altura más pequeños para moverse con más holgura
-//     this.walls = [];
-//     this.playerRadius = 0.22;   // antes 0.4 — más pequeño = menos choques
-//     this.playerHeight = 1.6;
-
-//     this.gameStartTime = null;      // Momento en que empieza el juego
-//     this.gameEndTime = null;        // Momento en que termina el juego
-//     this.gameFinished = false;       // Si el juego ya terminó
-//     this.statsPanel = null;          // Referencia al panel de estadísticas
-
-//     // Cámara superior
-//     this.topCamera = null;
-//     this.topCameraViewport = {
-//       x: 20,
-//       y: 20,
-//       width: 300,
-//       height: 200
-//     };
-//     this.playerMarker = null;
-
-//     this.renderer = this.createRenderer(myCanvas);
-//     this.createLights();
-//     this.createCamera();
-//     this.createGround();
-
-//     // Cargar laberinto
-//     var laberintoCargado = $.Deferred();
-//     this.laberinto = new Laberinto("./laberinto.txt", laberintoCargado);
-//     this.add(this.laberinto);
-
-//     laberintoCargado.done(() => {
-//       console.log("✅ Laberinto cargado");
-//       this.collectWalls();
-//       this.createPickups();
-//       this.createTopCamera();
-//       this.initFirstPersonControls();
-//       this.setupMouseEvents();
-//       this.startGameTimer();
-//     });
-//   }
-
-//   // ─────────────────────────────────────────────
-//   //  PICKUPS
-//   // ─────────────────────────────────────────────
-
-//   createPickups() {
-//     this.nucleo = new Nucleo(null, "nucleo");
-//     this.add(this.nucleo);
-//     this.laberinto.getMundoFromCelda(3, 5, this.nucleo.position);
-//     this.nucleo.position.y = 0.75;
-//     this.pickups.push({ obj: this.nucleo, nombre: '💎 Núcleo', recogido: false });
-
-//     this.carnivora = new Carnivora();
-//     this.add(this.carnivora);
-//     this.laberinto.getMundoFromCelda(13, 15, this.carnivora.position);
-//     this.carnivora.position.y = 0;
-//     this.pickups.push({ obj: this.carnivora, nombre: '🌿 Carnívora', recogido: false });
-
-//     this.mosca = new Mosca();
-//     this.add(this.mosca);
-//     this.laberinto.getMundoFromCelda(8, 17, this.mosca.position);
-//     this.mosca.position.y = 1.5;
-//     this.pickups.push({ obj: this.mosca, nombre: '🪰 Mosca', recogido: false });
-
-//     this.llave = new Llave();
-//     this.add(this.llave);
-//     this.laberinto.getMundoFromCelda(15, 20, this.llave.position);
-//     this.llave.position.y = 0;
-//     this.pickups.push({ obj: this.llave, nombre: '🔑 Llave', recogido: false });
-
-//     this.puerta = new Puerta();
-//     this.add(this.puerta);
-//     this.laberinto.getMundoFromCelda(1, 24, this.puerta.position);
-//     this.puerta.position.y = 0;
-//     this.puerta.rotation.y = Math.PI / 2;
-//     this.puerta.position.z += 0.5;
-//     this.puertaOriginalY = this.puerta.rotation.y;
-//   }
-
-//   // ─────────────────────────────────────────────
-//   //  COLISIONES
-//   // ─────────────────────────────────────────────
-
-//   collectWalls() {
-//     this.laberinto.children.forEach(child => {
-//       if (child.isMesh || child.isObject3D) {
-//         this.walls.push(child);
-//       }
-//     });
-//     console.log(`🧱 ${this.walls.length} paredes detectadas`);
-//   }
-
-//   checkCollision(newPosition) {
-//     const playerBox = new THREE.Box3().setFromCenterAndSize(
-//       newPosition,
-//       new THREE.Vector3(this.playerRadius * 2, this.playerHeight, this.playerRadius * 2)
-//     );
-
-//     for (let wall of this.walls) {
-//       if (!wall.visible) continue;
-//       const wallBox = new THREE.Box3().setFromObject(wall);
-//       if (playerBox.intersectsBox(wallBox)) {
-//         return true;
-//       }
-//     }
-//     return false;
-//   }
-
-//   // ─────────────────────────────────────────────
-//   //  CONTROLES
-//   // ─────────────────────────────────────────────
-//   startGameTimer() {
-//     this.gameStartTime = Date.now();
-//     console.log("⏱️ Temporizador iniciado");
-//   }
-//   showStatsPanel() {
-//     if (this.gameFinished) return;
-//     this.gameFinished = true;
-//     this.gameEndTime = Date.now();
-
-//     // Calcular tiempo total en segundos
-//     const totalTime = (this.gameEndTime - this.gameStartTime) / 1000;
-//     const minutes = Math.floor(totalTime / 60);
-//     const seconds = Math.floor(totalTime % 60);
-//     const centiseconds = Math.floor((totalTime % 1) * 100);
-
-//     // Calcular estadísticas
-//     const totalPickups = this.totalPickups;
-//     const collectedPickups = this.pickupsRecogidos.length;
-//     const pickupNames = this.pickupsRecogidos.join(', ');
-
-//     // Crear el panel HTML
-//     const panel = document.createElement('div');
-//     panel.id = 'stats-panel';
-//     panel.innerHTML = `
-//     <div style="
-//       position: fixed;
-//       top: 50%;
-//       left: 50%;
-//       transform: translate(-50%, -50%);
-//       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-//       color: #fff;
-//       padding: 30px 40px;
-//       border-radius: 20px;
-//       font-family: 'Arial', sans-serif;
-//       z-index: 2000;
-//       text-align: center;
-//       box-shadow: 0 0 50px rgba(0,0,0,0.8);
-//       border: 2px solid #ffaa00;
-//       min-width: 350px;
-//       animation: slideIn 0.5s ease-out;
-//     ">
-//       <style>
-//         @keyframes slideIn {
-//           from {
-//             opacity: 0;
-//             transform: translate(-50%, -50%) scale(0.8);
-//           }
-//           to {
-//             opacity: 1;
-//             transform: translate(-50%, -50%) scale(1);
-//           }
-//         }
-//         @keyframes glow {
-//           0% { text-shadow: 0 0 5px #ffaa00; }
-//           100% { text-shadow: 0 0 20px #ffaa00; }
-//         }
-//         .stat-number {
-//           font-size: 48px;
-//           font-weight: bold;
-//           color: #ffaa00;
-//           animation: glow 1s ease-in-out infinite alternate;
-//         }
-//         .stat-label {
-//           font-size: 14px;
-//           color: #aaa;
-//           margin-top: 5px;
-//         }
-//         .stat-row {
-//           margin: 20px 0;
-//           padding: 10px;
-//           background: rgba(255,255,255,0.1);
-//           border-radius: 10px;
-//         }
-//         .pickup-list {
-//           font-size: 16px;
-//           color: #ffaa00;
-//           margin-top: 10px;
-//         }
-//         button {
-//           margin-top: 20px;
-//           padding: 10px 30px;
-//           font-size: 16px;
-//           background: #ffaa00;
-//           color: #1a1a2e;
-//           border: none;
-//           border-radius: 25px;
-//           cursor: pointer;
-//           font-weight: bold;
-//           transition: all 0.3s;
-//         }
-//         button:hover {
-//           transform: scale(1.05);
-//           background: #ffcc44;
-//           box-shadow: 0 0 15px #ffaa00;
-//         }
-//         h1 {
-//           margin: 0 0 20px 0;
-//           font-size: 28px;
-//           color: #ffaa00;
-//         }
-//         .trophy {
-//           font-size: 60px;
-//           margin-bottom: 10px;
-//         }
-//       </style>
-      
-//       <div class="trophy">🏆</div>
-//       <h1>¡VICTORIA!</h1>
-//       <p>¡Has completado el laberinto!</p>
-      
-//       <div class="stat-row">
-//         <div class="stat-number">${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${centiseconds.toString().padStart(2, '0')}</div>
-//         <div class="stat-label">TIEMPO TOTAL</div>
-//       </div>
-      
-//       <div class="stat-row">
-//         <div class="stat-number">${collectedPickups}/${totalPickups}</div>
-//         <div class="stat-label">PICK-UPS RECOGIDOS</div>
-//         <div class="pickup-list">📦 ${pickupNames || 'Ninguno'}</div>
-//       </div>
-      
-//       <div class="stat-row">
-//         <div class="stat-number">${Math.floor(totalTime * 100)}</div>
-//         <div class="stat-label">PUNTUACIÓN</div>
-//         <div class="stat-label" style="font-size: 11px;">(Tiempo × 100)</div>
-//       </div>
-      
-//       <button onclick="location.reload()">🔄 JUGAR DE NUEVO</button>
-//       <button id="close-stats" style="background: #333; color: #fff; margin-left: 10px;">✖ CERRAR</button>
-//     </div>
-//   `;
-
-//     document.body.appendChild(panel);
-
-//     // Evento para cerrar el panel
-//     document.getElementById('close-stats').addEventListener('click', () => {
-//       panel.remove();
-//     });
-
-//     // Guardar estadísticas en consola también
-//     console.log("═══════════════════════════════════");
-//     console.log("🏆 ESTADÍSTICAS FINALES 🏆");
-//     console.log(`⏱️ Tiempo: ${minutes}m ${seconds}s ${centiseconds}ms`);
-//     console.log(`📦 Pick-ups: ${collectedPickups}/${totalPickups} (${pickupNames})`);
-//     console.log(`⭐ Puntuación: ${Math.floor(totalTime * 100)}`);
-//     console.log("═══════════════════════════════════");
-//   }
-//   initFirstPersonControls() {
-//     this.controls = new FirstPersonControls(this.camera, this.renderer.domElement);
-//     this.controls.movementSpeed = 5.0;
-//     this.controls.lookSpeed = 0.1;
-//     this.controls.activeLook = true;
-
-//     this.laberinto.getMundoFromCelda(1, 1, this.camera.position);
-//     this.camera.position.y = this.playerHeight;
-
-//     console.log("🎮 Controles activados - Haz CLICK en la pantalla para empezar");
-//   }
-
-//   setupMouseEvents() {
-//     this.renderer.domElement.addEventListener('click', () => {
-//       this.checkPickupCollection();
-//       this.checkDoorInteraction();
-//     });
-//   }
-
-//   // ─────────────────────────────────────────────
-//   //  LÓGICA DE JUEGO
-//   // ─────────────────────────────────────────────
-
-//   checkPickupCollection() {
-//     const distanciaMaxima = 2.5;
-
-//     for (let pickup of this.pickups) {
-//       if (!pickup.recogido && pickup.obj.visible) {
-//         const distancia = this.camera.position.distanceTo(pickup.obj.position);
-//         if (distancia < distanciaMaxima) {
-//           pickup.recogido = true;
-//           this.pickupsRecogidos.push(pickup.nombre);
-//           pickup.obj.visible = false;
-//           console.log(`✅ ¡${pickup.nombre} recogido! (${this.pickupsRecogidos.length}/${this.totalPickups})`);
-//           this.createPickupEffect(pickup.obj.position);
-//           this.updateDisplay();
-//           if (this.pickupsRecogidos.length === this.totalPickups) {
-//             console.log("🎉 ¡FELICIDADES! Has recogido todos los objetos. ¡Ve a la puerta! 🎉");
-//           }
-//         }
-//       }
-//     }
-//   }
-
-//   updateDisplay() {
-//     const statusDiv = document.getElementById('pickups-status');
-//     if (statusDiv) {
-//       statusDiv.innerHTML = `📦 ${this.pickupsRecogidos.length}/${this.totalPickups}`;
-//     }
-//   }
-
-//   createPickupEffect(position) {
-//     const geometry = new THREE.SphereGeometry(0.2, 8, 8);
-//     const material = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
-//     const effect = new THREE.Mesh(geometry, material);
-//     effect.position.copy(position);
-//     this.add(effect);
-
-//     let time = 0;
-//     const animate = () => {
-//       time += 0.05;
-//       effect.scale.setScalar(1 + time);
-//       if (time < 1) {
-//         requestAnimationFrame(animate);
-//       } else {
-//         this.remove(effect);
-//       }
-//     };
-//     animate();
-//   }
-
-//   checkDoorInteraction() {
-//     if (this.puerta && !this.puertaAbierta && this.pickupsRecogidos.length === this.totalPickups) {
-//       const distancia = this.camera.position.distanceTo(this.puerta.position);
-//       if (distancia < 3.0) {
-//         this.abrirPuerta();
-//       }
-//     }
-//   }
-
-//   // abrirPuerta() {
-//   //   this.puertaAbierta = true;
-//   //   console.log("🚪 ¡PUERTA ABIERTA! ¡Has completado el juego! 🚪");
-
-//   //   let angulo = 0;
-//   //   const animar = () => {
-//   //     angulo += 0.05;
-//   //     if (angulo <= Math.PI / 1.8) {
-//   //       this.puerta.rotation.y = this.puertaOriginalY + angulo;
-//   //       requestAnimationFrame(animar);
-//   //     }
-//   //   };
-//   //   animar();
-//   // }
-//   abrirPuerta() {
-//     this.puertaAbierta = true;
-//     console.log("🚪 ¡PUERTA ABIERTA! ¡Has completado el juego! 🚪");
-
-//     let angulo = 0;
-//     const animar = () => {
-//       angulo += 0.05;
-//       if (angulo <= Math.PI / 1.8) {
-//         this.puerta.rotation.y = this.puertaOriginalY + angulo;
-//         requestAnimationFrame(animar);
-//       } else {
-//         // Mostrar panel de estadísticas cuando la puerta termine de abrirse
-//         setTimeout(() => {
-//           this.showStatsPanel();
-//         }, 500);
-//       }
-//     };
-//     animar();
-//   }
-//   // ─────────────────────────────────────────────
-//   //  CÁMARAS
-//   // ─────────────────────────────────────────────
-
-//   createCamera() {
-//     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 100);
-//     this.add(this.camera);
-//   }
-
-//   createTopCamera() {
-//     const laberintoWidth = this.laberinto.xNumBloques * this.laberinto.anchoBloque;
-//     const laberintoHeight = this.laberinto.zNumBloques * this.laberinto.anchoBloque;
-//     const laberintoSize = Math.max(laberintoWidth, laberintoHeight);
-
-//     this.topCamera = new THREE.OrthographicCamera(
-//       -laberintoSize / 2,
-//       laberintoSize / 2,
-//       laberintoSize / 2,
-//       -laberintoSize / 2,
-//       0.1,
-//       50
-//     );
-
-//     this.topCamera.position.set(0, 20, 0);
-//     this.topCamera.lookAt(0, 0, 0);
-
-//     this.topLight = new THREE.DirectionalLight(0xffffff, 0.8);
-//     this.topLight.position.set(5, 10, 5);
-//     this.add(this.topLight);
-
-//     // Marcador del jugador en el minimapa
-//     this.playerMarker = new THREE.Mesh(
-//       new THREE.SphereGeometry(0.25, 16, 16),
-//       new THREE.MeshStandardMaterial({ color: 0xff3333, emissive: 0xff0000, emissiveIntensity: 0.3 })
-//     );
-//     this.add(this.playerMarker);
-
-//     // Borde del minimapa — se crea UNA sola vez con position:fixed
-//     const border = document.createElement('div');
-//     border.style.cssText = `
-//       position: fixed;
-//       left: ${this.topCameraViewport.x - 2}px;
-//       bottom: ${this.topCameraViewport.y - 2}px;
-//       width: ${this.topCameraViewport.width + 4}px;
-//       height: ${this.topCameraViewport.height + 4}px;
-//       border: 2px solid rgba(255,170,0,0.85);
-//       border-radius: 8px;
-//       pointer-events: none;
-//       z-index: 1000;
-//       box-shadow: 0 0 10px rgba(0,0,0,0.6);
-//     `;
-//     document.body.appendChild(border);
-
-//     console.log("📷 Cámara superior creada");
-//   }
-
-//   renderTopView() {
-//     if (!this.topCamera) return;
-
-//     // Actualizar marcador del jugador
-//     if (this.playerMarker && this.camera) {
-//       this.playerMarker.position.copy(this.camera.position);
-//       this.playerMarker.position.y = 0.1;
-//     }
-
-//     const width = this.topCameraViewport.width;
-//     const height = this.topCameraViewport.height;
-//     const x = this.topCameraViewport.x;
-//     // WebGL origin es bottom-left, igual que position:fixed bottom
-//     const y = this.topCameraViewport.y;
-
-//     // Guardar estado
-//     const currentViewport = this.renderer.getViewport(new THREE.Vector4());
-//     const currentScissor = this.renderer.getScissor(new THREE.Vector4());
-//     const currentScissorTest = this.renderer.getScissorTest();
-
-//     this.renderer.setScissorTest(true);
-//     this.renderer.setViewport(x, y, width, height);
-//     this.renderer.setScissor(x, y, width, height);
-//     this.renderer.setClearColor(0x000000, 0.7);
-//     this.renderer.clear();
-//     this.renderer.render(this, this.topCamera);
-
-//     // Restaurar
-//     this.renderer.setViewport(currentViewport.x, currentViewport.y, currentViewport.z, currentViewport.w);
-//     this.renderer.setScissor(currentScissor.x, currentScissor.y, currentScissor.z, currentScissor.w);
-//     this.renderer.setScissorTest(currentScissorTest);
-//     this.renderer.setClearColor(0x0a0a1a, 1.0); // mismo color que el cielo
-//   }
-
-//   // ─────────────────────────────────────────────
-//   //  ESCENA BASE
-//   // ─────────────────────────────────────────────
-
-
-
-//   createGround() {
-//     const geometry = new THREE.BoxGeometry(100, 0.02, 100);
-
-//     // Cargar diferentes texturas
-//     const colorMap = new THREE.TextureLoader().load('../imgs/cesped.jpg');
-//     const normalMap = new THREE.TextureLoader().load('../texturas/TexturaCesped/NormalCesped.png'); // Relieve
-//     const roughMap = new THREE.TextureLoader().load('../texturas/TexturaCesped/RoughCesped.png');   // Rugosidad
-
-//     // Repetir texturas
-//     [colorMap, normalMap, roughMap].forEach(map => {
-//       if (map) {
-//         map.wrapS = THREE.RepeatWrapping;
-//         map.wrapT = THREE.RepeatWrapping;
-//         map.repeat.set(8, 8);
-//       }
-//     });
-
-//     const material = new THREE.MeshStandardMaterial({
-//       map: colorMap,
-//       normalMap: normalMap,    // Para relieve (requisito de la práctica)
-//       roughnessMap: roughMap,
-//       roughness: 0.8,
-//       metalness: 0.1
-//     });
-
-//     const ground = new THREE.Mesh(geometry, material);
-//     ground.position.y = -0.01;
-//     ground.receiveShadow = true;  // Recibe sombras
-//     this.add(ground);
-//   }
-
-//   createLights() {
-//     this.ambientLight = new THREE.AmbientLight('white', 0.5);
-//     this.add(this.ambientLight);
-
-//     this.mainLight = new THREE.DirectionalLight(0xffffff, 1);
-//     this.mainLight.position.set(5, 10, 5);
-//     this.add(this.mainLight);
-
-//     this.fillLight = new THREE.PointLight(0x4466cc, 0.3);
-//     this.fillLight.position.set(0, -1, 0);
-//     this.add(this.fillLight);
-
-//     this.redLight = new THREE.PointLight(0xff0000, 0.5);
-//     this.redLight.position.set(5, 2, 5);
-//     this.add(this.redLight);
-
-//     this.greenLight = new THREE.PointLight(0x00ff00, 0.5);
-//     this.greenLight.position.set(-5, 2, 8);
-//     this.add(this.greenLight);
-
-//     this.blueLight = new THREE.PointLight(0x0000ff, 0.5);
-//     this.blueLight.position.set(8, 2, -3);
-//     this.add(this.blueLight);
-
-//     this.changingLight = new THREE.PointLight(0xffaa00, 0.6);
-//     this.changingLight.position.set(0, 3, 0);
-//     this.add(this.changingLight);
-
-//     console.log("💡 Luces creadas");
-//   }
-
-//   createRenderer(myCanvas) {
-//     const renderer = new THREE.WebGLRenderer({ antialias: true });
-//     renderer.setClearColor(0x0a0a1a, 1.0); // cielo noche oscuro
-//     renderer.setSize(window.innerWidth, window.innerHeight);
-//     renderer.shadowMap.enabled = true;
-//     $(myCanvas).append(renderer.domElement);
-//     return renderer;
-//   }
-
-//   // ─────────────────────────────────────────────
-//   //  RESIZE
-//   // ─────────────────────────────────────────────
-
-//   onWindowResize() {
-//     this.camera.aspect = window.innerWidth / window.innerHeight;
-//     this.camera.updateProjectionMatrix();
-//     this.renderer.setSize(window.innerWidth, window.innerHeight);
-
-//     if (this.topCamera && this.laberinto) {
-//       const laberintoSize = Math.max(
-//         this.laberinto.xNumBloques * this.laberinto.anchoBloque,
-//         this.laberinto.zNumBloques * this.laberinto.anchoBloque
-//       );
-//       this.topCamera.left = -laberintoSize / 2;
-//       this.topCamera.right = laberintoSize / 2;
-//       this.topCamera.top = laberintoSize / 2;
-//       this.topCamera.bottom = -laberintoSize / 2;
-//       this.topCamera.updateProjectionMatrix();
-//     }
-
-//     if (this.controls) this.controls.handleResize();
-//   }
-
-//   // ─────────────────────────────────────────────
-//   //  BUCLE PRINCIPAL
-//   // ─────────────────────────────────────────────
-
-//   update() {
-//     if (this.controls) {
-//       // Guardar posición ANTES de mover
-//       const prevPosition = this.camera.position.clone();
-
-//       this.controls.update(1 / 60);
-
-//       // Forzar altura del jugador (no puede volar ni agacharse)
-//       this.camera.position.y = this.playerHeight;
-
-//       // Comprobar colisión con la nueva posición
-//       if (this.walls.length > 0 && this.checkCollision(this.camera.position)) {
-
-//         // Intentar sliding en X (deslizarse a lo largo de Z)
-//         const slideX = new THREE.Vector3(
-//           this.camera.position.x,
-//           this.playerHeight,
-//           prevPosition.z
-//         );
-
-//         // Intentar sliding en Z (deslizarse a lo largo de X)
-//         const slideZ = new THREE.Vector3(
-//           prevPosition.x,
-//           this.playerHeight,
-//           this.camera.position.z
-//         );
-
-//         if (!this.checkCollision(slideX)) {
-//           // Puede moverse en X → deslizarse en esa dirección
-//           this.camera.position.copy(slideX);
-//         } else if (!this.checkCollision(slideZ)) {
-//           // Puede moverse en Z → deslizarse en esa dirección
-//           this.camera.position.copy(slideZ);
-//         } else {
-//           // Bloqueado en ambos ejes → volver a la posición anterior
-//           this.camera.position.copy(prevPosition);
-//           this.camera.position.y = this.playerHeight;
-//         }
-//       }
-//     }
-
-//     // Animar objetos no recogidos
-//     if (this.carnivora && !this.pickups.find(p => p.nombre === '🌿 Carnívora')?.recogido) {
-//       this.carnivora.update();
-//     }
-//     if (this.nucleo && !this.pickups.find(p => p.nombre === '💎 Núcleo')?.recogido) {
-//       this.nucleo.update();
-//     }
-//     if (this.mosca && !this.pickups.find(p => p.nombre === '🪰 Mosca')?.recogido) {
-//       this.mosca.update();
-//     }
-
-//     // Animación de luces
-//     const time = Date.now() * 0.002;
-
-//     this.redLight.color.setHSL(Math.sin(time) * 0.3 + 0.0, 1, 0.5);
-//     this.greenLight.color.setHSL(Math.sin(time + 2) * 0.3 + 0.33, 1, 0.5);
-//     this.blueLight.color.setHSL(Math.sin(time + 4) * 0.3 + 0.66, 1, 0.5);
-
-//     const hue = (time * 0.3) % 1;
-//     this.changingLight.color.setHSL(hue, 1, 0.5);
-//     this.changingLight.intensity = 0.4 + Math.sin(time * 3) * 0.3;
-//     this.changingLight.position.x = Math.sin(time * 0.5) * 3;
-//     this.changingLight.position.z = Math.cos(time * 0.7) * 3;
-
-//     // Renderizar vista principal
-//     this.renderer.render(this, this.camera);
-
-//     // Renderizar minimapa (scissor test)
-//     this.renderTopView();
-
-//     requestAnimationFrame(() => this.update());
-//   }
-// }
-
-// $(function () {
-//   const scene = new MyScene("#WebGL-output");
-//   window.addEventListener("resize", () => scene.onWindowResize());
-//   scene.update();
-// });
 
 // Clases de la biblioteca
 import * as THREE from 'three'
@@ -698,17 +31,15 @@ class MyScene extends THREE.Scene {
     this.gameStartTime = null;
     this.gameEndTime = null;
     this.gameFinished = false;
-    this.statsPanel = null;
 
     // Cámara superior (minimapa)
     this.topCamera = null;
-    this.topCameraViewport = {
-      x: 20,
-      y: 20,
-      width: 300,
-      height: 200
-    };
+    this.topCameraViewport = { x: 20, y: 20, width: 300, height: 200 };
     this.playerMarker = null;
+
+    // Raycaster reutilizable
+    this.raycaster = new THREE.Raycaster();
+    this.raycaster.far = 3.0;
 
     this.renderer = this.createRenderer(myCanvas);
     this.createLights();
@@ -752,6 +83,8 @@ class MyScene extends THREE.Scene {
     this.add(this.mosca);
     this.laberinto.getMundoFromCelda(8, 23, this.mosca.position);
     this.mosca.position.y = 1.25;
+    // La mosca tiene colisión hasta que se recoge
+    this.walls.push(this.mosca);
     this.pickups.push({ obj: this.mosca, nombre: '🪰 Mosca', recogido: false });
 
     this.llave = new Llave();
@@ -760,17 +93,15 @@ class MyScene extends THREE.Scene {
     this.llave.position.y = 0;
     this.pickups.push({ obj: this.llave, nombre: '🔑 Llave', recogido: false });
 
+    // Puerta: sólida hasta que se abra
     this.puerta = new Puerta();
     this.add(this.puerta);
     this.laberinto.getMundoFromCelda(1, 24, this.puerta.position);
     this.puerta.position.y = 0;
     this.puerta.rotation.y = Math.PI / 2;
     this.puerta.position.z += 0.5;
-    this.puertaOriginalY = this.puerta.rotation.y;
-    
-    // 🔥 IMPORTANTE: La puerta es sólida (no se puede atravesar)
+    this.puertaRotacionOriginal = this.puerta.rotation.y;
     this.walls.push(this.puerta);
-    this.walls.push(this.mosca)
   }
 
   // ─────────────────────────────────────────────
@@ -802,8 +133,181 @@ class MyScene extends THREE.Scene {
     return false;
   }
 
+  removeFromWalls(obj) {
+    const idx = this.walls.indexOf(obj);
+    if (idx !== -1) this.walls.splice(idx, 1);
+  }
+
   // ─────────────────────────────────────────────
-  //  CONTROLES Y TEMPORIZADOR
+  //  EVENTOS DE RATÓN (RAYCAST UNIFICADO)
+  // ─────────────────────────────────────────────
+
+  setupMouseEvents() {
+    this.renderer.domElement.addEventListener('click', () => {
+      this.handleRaycastInteraction();
+    });
+  }
+
+  handleRaycastInteraction() {
+    // Dirección hacia donde mira la cámara
+    const direction = new THREE.Vector3();
+    this.camera.getWorldDirection(direction);
+    this.raycaster.set(this.camera.position, direction);
+
+    // ── Fase 1: intentar recoger pickups pendientes ──────────────
+    const pickupsPendientes = this.pickups
+      .filter(p => !p.recogido)
+      .map(p => p.obj);
+
+    if (pickupsPendientes.length > 0) {
+      const hitsPickup = this.raycaster.intersectObjects(pickupsPendientes, true);
+
+      if (hitsPickup.length > 0) {
+        // Buscar a qué pickup pertenece el mesh impactado
+        const meshImpactado = hitsPickup[0].object;
+        const pickup = this.pickups.find(p =>
+          !p.recogido && this.perteneceA(meshImpactado, p.obj)
+        );
+
+        if (pickup) {
+          this.recogerPickup(pickup);
+          return; // Interacción resuelta
+        }
+      }
+    }
+
+    // ── Fase 2: intentar abrir la puerta ─────────────────────────
+    if (!this.puertaAbierta) {
+      const hitsPuerta = this.raycaster.intersectObjects([this.puerta], true);
+
+      if (hitsPuerta.length > 0) {
+        if (this.pickupsRecogidos.length === this.totalPickups) {
+          this.abrirPuerta();
+        } else {
+          const faltan = this.totalPickups - this.pickupsRecogidos.length;
+          console.log(`🔒 Puerta bloqueada: te faltan ${faltan} objeto(s)`);
+          this.mostrarMensaje(`🔒 Necesitas ${faltan} objeto(s) más para abrir la puerta`);
+        }
+      }
+    }
+  }
+
+  /**
+   * Comprueba si un mesh descendiente pertenece a un objeto raíz.
+   */
+  perteneceA(mesh, raiz) {
+    let actual = mesh;
+    while (actual) {
+      if (actual === raiz) return true;
+      actual = actual.parent;
+    }
+    return false;
+  }
+
+  // ─────────────────────────────────────────────
+  //  LÓGICA DE JUEGO
+  // ─────────────────────────────────────────────
+
+  recogerPickup(pickup) {
+    pickup.recogido = true;
+    pickup.obj.visible = false;
+
+    // Si el pickup tenía colisión (ej: mosca), quitarla
+    this.removeFromWalls(pickup.obj);
+
+    this.pickupsRecogidos.push(pickup.nombre);
+    console.log(`✅ ${pickup.nombre} recogido (${this.pickupsRecogidos.length}/${this.totalPickups})`);
+
+    this.createPickupEffect(pickup.obj.position.clone());
+    this.updateDisplay();
+
+    if (this.pickupsRecogidos.length === this.totalPickups) {
+      console.log("🎉 ¡Todos los objetos recogidos! Ve a la puerta.");
+      this.mostrarMensaje("🎉 ¡Todos los objetos recogidos! Ve a la puerta.");
+    }
+  }
+
+  abrirPuerta() {
+    this.puertaAbierta = true;
+    console.log("🚪 ¡Puerta abierta!");
+
+    // Quitar la puerta de las colisiones para poder pasar
+    this.removeFromWalls(this.puerta);
+
+    let angulo = 0;
+    const animar = () => {
+      angulo += 0.05;
+      this.puerta.rotation.y = this.puertaRotacionOriginal + angulo;
+      if (angulo < Math.PI / 1.8) {
+        requestAnimationFrame(animar);
+      } else {
+        setTimeout(() => this.showStatsPanel(), 500);
+      }
+    };
+    animar();
+  }
+
+  updateDisplay() {
+    const statusDiv = document.getElementById('pickups-status');
+    if (statusDiv) {
+      statusDiv.innerHTML = `📦 ${this.pickupsRecogidos.length}/${this.totalPickups}`;
+    }
+  }
+
+  mostrarMensaje(texto, duracion = 3000) {
+    let msg = document.getElementById('hud-mensaje');
+    if (!msg) {
+      msg = document.createElement('div');
+      msg.id = 'hud-mensaje';
+      msg.style.cssText = `
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.75);
+        color: #fff;
+        padding: 10px 24px;
+        border-radius: 20px;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        z-index: 1500;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      `;
+      document.body.appendChild(msg);
+    }
+
+    msg.textContent = texto;
+    msg.style.opacity = '1';
+    clearTimeout(msg._timeout);
+    msg._timeout = setTimeout(() => { msg.style.opacity = '0'; }, duracion);
+  }
+
+  createPickupEffect(position) {
+    const geometry = new THREE.SphereGeometry(0.2, 8, 8);
+    const material = new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true });
+    const effect = new THREE.Mesh(geometry, material);
+    effect.position.copy(position);
+    this.add(effect);
+
+    let t = 0;
+    const animate = () => {
+      t += 0.05;
+      effect.scale.setScalar(1 + t * 2);
+      effect.material.opacity = Math.max(0, 1 - t);
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        this.remove(effect);
+        geometry.dispose();
+        material.dispose();
+      }
+    };
+    animate();
+  }
+
+  // ─────────────────────────────────────────────
+  //  TEMPORIZADOR Y ESTADÍSTICAS
   // ─────────────────────────────────────────────
 
   startGameTimer() {
@@ -820,135 +324,92 @@ class MyScene extends THREE.Scene {
     const minutes = Math.floor(totalTime / 60);
     const seconds = Math.floor(totalTime % 60);
     const centiseconds = Math.floor((totalTime % 1) * 100);
-
-    const totalPickups = this.totalPickups;
     const collectedPickups = this.pickupsRecogidos.length;
     const pickupNames = this.pickupsRecogidos.join(', ');
 
     const panel = document.createElement('div');
     panel.id = 'stats-panel';
     panel.innerHTML = `
-    <div style="
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      color: #fff;
-      padding: 30px 40px;
-      border-radius: 20px;
-      font-family: 'Arial', sans-serif;
-      z-index: 2000;
-      text-align: center;
-      box-shadow: 0 0 50px rgba(0,0,0,0.8);
-      border: 2px solid #ffaa00;
-      min-width: 350px;
-      animation: slideIn 0.5s ease-out;
-    ">
-      <style>
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.8);
+      <div style="
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        color: #fff;
+        padding: 30px 40px;
+        border-radius: 20px;
+        font-family: Arial, sans-serif;
+        z-index: 2000;
+        text-align: center;
+        box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        border: 2px solid #ffaa00;
+        min-width: 350px;
+        animation: slideIn 0.5s ease-out;
+      ">
+        <style>
+          @keyframes slideIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
           }
-          to {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
+          @keyframes glow {
+            0%   { text-shadow: 0 0 5px #ffaa00; }
+            100% { text-shadow: 0 0 20px #ffaa00; }
           }
-        }
-        @keyframes glow {
-          0% { text-shadow: 0 0 5px #ffaa00; }
-          100% { text-shadow: 0 0 20px #ffaa00; }
-        }
-        .stat-number {
-          font-size: 48px;
-          font-weight: bold;
-          color: #ffaa00;
-          animation: glow 1s ease-in-out infinite alternate;
-        }
-        .stat-label {
-          font-size: 14px;
-          color: #aaa;
-          margin-top: 5px;
-        }
-        .stat-row {
-          margin: 20px 0;
-          padding: 10px;
-          background: rgba(255,255,255,0.1);
-          border-radius: 10px;
-        }
-        .pickup-list {
-          font-size: 16px;
-          color: #ffaa00;
-          margin-top: 10px;
-        }
-        button {
-          margin-top: 20px;
-          padding: 10px 30px;
-          font-size: 16px;
-          background: #ffaa00;
-          color: #1a1a2e;
-          border: none;
-          border-radius: 25px;
-          cursor: pointer;
-          font-weight: bold;
-          transition: all 0.3s;
-        }
-        button:hover {
-          transform: scale(1.05);
-          background: #ffcc44;
-          box-shadow: 0 0 15px #ffaa00;
-        }
-        h1 {
-          margin: 0 0 20px 0;
-          font-size: 28px;
-          color: #ffaa00;
-        }
-        .trophy {
-          font-size: 60px;
-          margin-bottom: 10px;
-        }
-      </style>
-      
-      <div class="trophy">🏆</div>
-      <h1>¡VICTORIA!</h1>
-      <p>¡Has completado el laberinto!</p>
-      
-      <div class="stat-row">
-        <div class="stat-number">${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${centiseconds.toString().padStart(2, '0')}</div>
-        <div class="stat-label">TIEMPO TOTAL</div>
+          .stat-number { font-size: 48px; font-weight: bold; color: #ffaa00; animation: glow 1s ease-in-out infinite alternate; }
+          .stat-label  { font-size: 14px; color: #aaa; margin-top: 5px; }
+          .stat-row    { margin: 20px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; }
+          .pickup-list { font-size: 16px; color: #ffaa00; margin-top: 10px; }
+          #stats-panel button {
+            margin-top: 20px; padding: 10px 30px; font-size: 16px;
+            background: #ffaa00; color: #1a1a2e; border: none;
+            border-radius: 25px; cursor: pointer; font-weight: bold; transition: all 0.3s;
+          }
+          #stats-panel button:hover { transform: scale(1.05); background: #ffcc44; box-shadow: 0 0 15px #ffaa00; }
+          #stats-panel h1 { margin: 0 0 20px 0; font-size: 28px; color: #ffaa00; }
+          .trophy { font-size: 60px; margin-bottom: 10px; }
+        </style>
+
+        <div class="trophy">🏆</div>
+        <h1>¡VICTORIA!</h1>
+        <p>¡Has completado el laberinto!</p>
+
+        <div class="stat-row">
+          <div class="stat-number">${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${centiseconds.toString().padStart(2, '0')}</div>
+          <div class="stat-label">TIEMPO TOTAL</div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-number">${collectedPickups}/${this.totalPickups}</div>
+          <div class="stat-label">PICK-UPS RECOGIDOS</div>
+          <div class="pickup-list">📦 ${pickupNames || 'Ninguno'}</div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-number">${Math.floor(totalTime * 100)}</div>
+          <div class="stat-label">PUNTUACIÓN</div>
+          <div class="stat-label" style="font-size:11px;">(Tiempo × 100)</div>
+        </div>
+
+        <button onclick="location.reload()">🔄 JUGAR DE NUEVO</button>
+        <button id="close-stats" style="background:#333;color:#fff;margin-left:10px;">✖ CERRAR</button>
       </div>
-      
-      <div class="stat-row">
-        <div class="stat-number">${collectedPickups}/${totalPickups}</div>
-        <div class="stat-label">PICK-UPS RECOGIDOS</div>
-        <div class="pickup-list">📦 ${pickupNames || 'Ninguno'}</div>
-      </div>
-      
-      <div class="stat-row">
-        <div class="stat-number">${Math.floor(totalTime * 100)}</div>
-        <div class="stat-label">PUNTUACIÓN</div>
-        <div class="stat-label" style="font-size: 11px;">(Tiempo × 100)</div>
-      </div>
-      
-      <button onclick="location.reload()">🔄 JUGAR DE NUEVO</button>
-      <button id="close-stats" style="background: #333; color: #fff; margin-left: 10px;">✖ CERRAR</button>
-    </div>
-  `;
+    `;
 
     document.body.appendChild(panel);
-
-    document.getElementById('close-stats').addEventListener('click', () => {
-      panel.remove();
-    });
+    document.getElementById('close-stats').addEventListener('click', () => panel.remove());
 
     console.log("═══════════════════════════════════");
     console.log("🏆 ESTADÍSTICAS FINALES 🏆");
-    console.log(`⏱️ Tiempo: ${minutes}m ${seconds}s ${centiseconds}ms`);
-    console.log(`📦 Pick-ups: ${collectedPickups}/${totalPickups} (${pickupNames})`);
+    console.log(`⏱️ Tiempo: ${minutes}m ${seconds}s ${centiseconds}cs`);
+    console.log(`📦 Pick-ups: ${collectedPickups}/${this.totalPickups} (${pickupNames})`);
     console.log(`⭐ Puntuación: ${Math.floor(totalTime * 100)}`);
     console.log("═══════════════════════════════════");
   }
+
+  // ─────────────────────────────────────────────
+  //  CONTROLES
+  // ─────────────────────────────────────────────
 
   initFirstPersonControls() {
     this.controls = new FirstPersonControls(this.camera, this.renderer.domElement);
@@ -960,105 +421,6 @@ class MyScene extends THREE.Scene {
     this.camera.position.y = this.playerHeight;
 
     console.log("🎮 Controles activados - Haz CLICK en la pantalla para empezar");
-  }
-
-  setupMouseEvents() {
-    this.renderer.domElement.addEventListener('click', () => {
-      this.checkPickupCollection();
-      this.checkDoorInteraction();
-    });
-  }
-
-  // ─────────────────────────────────────────────
-  //  LÓGICA DE JUEGO
-  // ─────────────────────────────────────────────
-
-  checkPickupCollection() {
-    const distanciaMaxima = 2.5;
-
-    for (let pickup of this.pickups) {
-      if (!pickup.recogido && pickup.obj.visible) {
-        const distancia = this.camera.position.distanceTo(pickup.obj.position);
-        if (distancia < distanciaMaxima) {
-          pickup.recogido = true;
-          this.pickupsRecogidos.push(pickup.nombre);
-          pickup.obj.visible = false;
-
-          // Esto nos permite hacer que la mosca tenga colisiones pero que desparezca al recogerla, sin afectar a la puerta 
-          const idx = this.walls.indexOf(pickup.obj);
-          if (idx !== -1) this.walls.splice(idx, 1);
-
-          console.log(`✅ ¡${pickup.nombre} recogido! (${this.pickupsRecogidos.length}/${this.totalPickups})`);
-          this.createPickupEffect(pickup.obj.position);
-          this.updateDisplay();
-          if (this.pickupsRecogidos.length === this.totalPickups) {
-            console.log("🎉 ¡FELICIDADES! Has recogido todos los objetos. ¡Ve a la puerta! 🎉");
-          }
-        }
-      }
-    }
-  }
-
-  updateDisplay() {
-    const statusDiv = document.getElementById('pickups-status');
-    if (statusDiv) {
-      statusDiv.innerHTML = `📦 ${this.pickupsRecogidos.length}/${this.totalPickups}`;
-    }
-  }
-
-  createPickupEffect(position) {
-    const geometry = new THREE.SphereGeometry(0.2, 8, 8);
-    const material = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
-    const effect = new THREE.Mesh(geometry, material);
-    effect.position.copy(position);
-    this.add(effect);
-
-    let time = 0;
-    const animate = () => {
-      time += 0.05;
-      effect.scale.setScalar(1 + time);
-      if (time < 1) {
-        requestAnimationFrame(animate);
-      } else {
-        this.remove(effect);
-      }
-    };
-    animate();
-  }
-
-  checkDoorInteraction() {
-    if (this.puerta && !this.puertaAbierta && this.pickupsRecogidos.length === this.totalPickups) {
-      const distancia = this.camera.position.distanceTo(this.puerta.position);
-      if (distancia < 3.0) {
-        this.abrirPuerta();
-      }
-    }
-  }
-
-  abrirPuerta() {
-    this.puertaAbierta = true;
-    console.log("🚪 ¡PUERTA ABIERTA! ¡Has completado el juego! 🚪");
-    
-    // 🔥 Quitar la puerta de las colisiones para poder pasar
-    const index = this.walls.indexOf(this.puerta);
-    if (index !== -1) {
-      this.walls.splice(index, 1);
-      console.log("🔓 Puerta removida del sistema de colisiones - ahora puedes pasar");
-    }
-
-    let angulo = 0;
-    const animar = () => {
-      angulo += 0.05;
-      if (angulo <= Math.PI / 1.8) {
-        this.puerta.rotation.y = this.puertaOriginalY + angulo;
-        requestAnimationFrame(animar);
-      } else {
-        setTimeout(() => {
-          this.showStatsPanel();
-        }, 500);
-      }
-    };
-    animar();
   }
 
   // ─────────────────────────────────────────────
@@ -1076,14 +438,10 @@ class MyScene extends THREE.Scene {
     const laberintoSize = Math.max(laberintoWidth, laberintoHeight);
 
     this.topCamera = new THREE.OrthographicCamera(
-      -laberintoSize / 2,
-      laberintoSize / 2,
-      laberintoSize / 2,
-      -laberintoSize / 2,
-      0.1,
-      50
+      -laberintoSize / 2, laberintoSize / 2,
+      laberintoSize / 2, -laberintoSize / 2,
+      0.1, 50
     );
-
     this.topCamera.position.set(0, 20, 0);
     this.topCamera.lookAt(0, 0, 0);
 
@@ -1097,6 +455,7 @@ class MyScene extends THREE.Scene {
     );
     this.add(this.playerMarker);
 
+    // Borde del minimapa
     const border = document.createElement('div');
     border.style.cssText = `
       position: fixed;
@@ -1123,11 +482,7 @@ class MyScene extends THREE.Scene {
       this.playerMarker.position.y = 0.1;
     }
 
-    const width = this.topCameraViewport.width;
-    const height = this.topCameraViewport.height;
-    const x = this.topCameraViewport.x;
-    const y = this.topCameraViewport.y;
-
+    const { x, y, width, height } = this.topCameraViewport;
     const currentViewport = this.renderer.getViewport(new THREE.Vector4());
     const currentScissor = this.renderer.getScissor(new THREE.Vector4());
     const currentScissorTest = this.renderer.getScissorTest();
@@ -1157,16 +512,14 @@ class MyScene extends THREE.Scene {
     const roughMap = new THREE.TextureLoader().load('../texturas/TexturaCesped/RoughCesped.png');
 
     [colorMap, normalMap, roughMap].forEach(map => {
-      if (map) {
-        map.wrapS = THREE.RepeatWrapping;
-        map.wrapT = THREE.RepeatWrapping;
-        map.repeat.set(8, 8);
-      }
+      map.wrapS = THREE.RepeatWrapping;
+      map.wrapT = THREE.RepeatWrapping;
+      map.repeat.set(8, 8);
     });
 
     const material = new THREE.MeshStandardMaterial({
       map: colorMap,
-      normalMap: normalMap,
+      normalMap,
       roughnessMap: roughMap,
       roughness: 0.8,
       metalness: 0.1
@@ -1228,14 +581,14 @@ class MyScene extends THREE.Scene {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
 
     if (this.topCamera && this.laberinto) {
-      const laberintoSize = Math.max(
+      const s = Math.max(
         this.laberinto.xNumBloques * this.laberinto.anchoBloque,
         this.laberinto.zNumBloques * this.laberinto.anchoBloque
       );
-      this.topCamera.left = -laberintoSize / 2;
-      this.topCamera.right = laberintoSize / 2;
-      this.topCamera.top = laberintoSize / 2;
-      this.topCamera.bottom = -laberintoSize / 2;
+      this.topCamera.left = -s / 2;
+      this.topCamera.right = s / 2;
+      this.topCamera.top = s / 2;
+      this.topCamera.bottom = -s / 2;
       this.topCamera.updateProjectionMatrix();
     }
 
@@ -1253,16 +606,8 @@ class MyScene extends THREE.Scene {
       this.camera.position.y = this.playerHeight;
 
       if (this.walls.length > 0 && this.checkCollision(this.camera.position)) {
-        const slideX = new THREE.Vector3(
-          this.camera.position.x,
-          this.playerHeight,
-          prevPosition.z
-        );
-        const slideZ = new THREE.Vector3(
-          prevPosition.x,
-          this.playerHeight,
-          this.camera.position.z
-        );
+        const slideX = new THREE.Vector3(this.camera.position.x, this.playerHeight, prevPosition.z);
+        const slideZ = new THREE.Vector3(prevPosition.x, this.playerHeight, this.camera.position.z);
 
         if (!this.checkCollision(slideX)) {
           this.camera.position.copy(slideX);
@@ -1275,7 +620,7 @@ class MyScene extends THREE.Scene {
       }
     }
 
-    // Animar objetos no recogidos
+    // Animar pickups no recogidos
     if (this.carnivora && !this.pickups.find(p => p.nombre === '🌿 Carnívora')?.recogido) {
       this.carnivora.update();
     }
@@ -1288,7 +633,6 @@ class MyScene extends THREE.Scene {
 
     // Animación de luces
     const time = Date.now() * 0.002;
-
     this.redLight.color.setHSL(Math.sin(time) * 0.3 + 0.0, 1, 0.5);
     this.greenLight.color.setHSL(Math.sin(time + 2) * 0.3 + 0.33, 1, 0.5);
     this.blueLight.color.setHSL(Math.sin(time + 4) * 0.3 + 0.66, 1, 0.5);
