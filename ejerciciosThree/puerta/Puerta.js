@@ -96,6 +96,7 @@ this.materialesDonut = [this.materialTapa, this.materialBorde];
   this.movil.add(pomo);
   this.add(this.movil);
   this.movil.position.set(0, 0, 0);
+  this.scale.set(1.2, 1.5, 1);
     // Al nodo  this, la grapadora, se le cuelgan como hijos la base y la parte móvil
   }
   
@@ -120,8 +121,7 @@ createPomo(tama){
   var torusKnot = new THREE.Mesh( geometry, this.material );
   var pomo = new THREE.Object3D();
   torusKnot.scale.set(tama*k,tama*k,tama*(k+0.025));
-  torusKnot.position.y = tama
-  torusKnot.position.x = tama - 0.1 + tama*0.7;
+  torusKnot.position.set(tama,tama,0);
   pomo.add(torusKnot);
   return pomo;
 

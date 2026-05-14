@@ -750,8 +750,8 @@ class MyScene extends THREE.Scene {
 
     this.mosca = new Mosca();
     this.add(this.mosca);
-    this.laberinto.getMundoFromCelda(8, 17, this.mosca.position);
-    this.mosca.position.y = 1.5;
+    this.laberinto.getMundoFromCelda(8, 23, this.mosca.position);
+    this.mosca.position.y = 1.25;
     this.pickups.push({ obj: this.mosca, nombre: '🪰 Mosca', recogido: false });
 
     this.llave = new Llave();
@@ -770,6 +770,7 @@ class MyScene extends THREE.Scene {
     
     // 🔥 IMPORTANTE: La puerta es sólida (no se puede atravesar)
     this.walls.push(this.puerta);
+    this.walls.push(this.mosca)
   }
 
   // ─────────────────────────────────────────────
@@ -982,6 +983,11 @@ class MyScene extends THREE.Scene {
           pickup.recogido = true;
           this.pickupsRecogidos.push(pickup.nombre);
           pickup.obj.visible = false;
+
+          // Esto nos permite hacer que la mosca tenga colisiones pero que desparezca al recogerla, sin afectar a la puerta 
+          const idx = this.walls.indexOf(pickup.obj);
+          if (idx !== -1) this.walls.splice(idx, 1);
+
           console.log(`✅ ¡${pickup.nombre} recogido! (${this.pickupsRecogidos.length}/${this.totalPickups})`);
           this.createPickupEffect(pickup.obj.position);
           this.updateDisplay();

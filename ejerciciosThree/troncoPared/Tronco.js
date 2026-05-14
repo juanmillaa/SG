@@ -4,14 +4,23 @@ import * as THREE from 'three'
 class Tronco extends THREE.Object3D {
 
   static loader = new THREE.TextureLoader();
+  // static materialConTexturaBase = new THREE.MeshStandardMaterial({
+  //     map: Tronco.loader.load("../texturas/TexturaBaseTronco1/DifuseWood.png"),
+  //     normalMap: Tronco.loader.load("../texturas/TexturaBaseTronco1/NormalWood.png"),
+  //     roughnessMap: Tronco.loader.load("../texturas/TexturaBaseTronco1/RoughWood.png"),
+  //     displacementMap: Tronco.loader.load("../texturas/TexturaBaseTronco1/DisplacementWood.png"),
+  //     displacementScale: 0.05
+  // });
   static materialConTexturaBase = new THREE.MeshStandardMaterial({
       map: Tronco.loader.load("../texturas/TexturaBaseTronco1/DifuseWood.png"),
       normalMap: Tronco.loader.load("../texturas/TexturaBaseTronco1/NormalWood.png"),
       roughnessMap: Tronco.loader.load("../texturas/TexturaBaseTronco1/RoughWood.png"),
       displacementMap: Tronco.loader.load("../texturas/TexturaBaseTronco1/DisplacementWood.png"),
-      displacementScale: 0.05
+      displacementScale: 0.15, 
+      roughness: 1.0,           
+      metalness: 0.0,           
+      normalScale: new THREE.Vector2(2.0, 2.0)  
   });
-
   static materialConTexturaPunta = new THREE.MeshStandardMaterial({
       map: Tronco.loader.load("../texturas/TexturaPuntaTronco/DifusePunta.png"),
       normalMap: Tronco.loader.load("../texturas/TexturaPuntaTronco/NormalPunta.png"),
