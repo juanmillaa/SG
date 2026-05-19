@@ -3,7 +3,6 @@ import * as THREE from 'three'
 class Puerta extends THREE.Object3D {
   static #TAMA = 1;
   static #CUERPO_DIMENSIONES;
-
   static {
     this.#CUERPO_DIMENSIONES = Object.freeze([
       this.#TAMA * 2,
@@ -12,147 +11,101 @@ class Puerta extends THREE.Object3D {
     ]);
   }
 
-  static get cuerpoDimensiones() {
-    return this.#CUERPO_DIMENSIONES;
-  }
+  static get cuerpoDimensiones() { return this.#CUERPO_DIMENSIONES; }
+  static get tama() { return this.#TAMA; }
 
-  assignCircularUVs(geometry) {
-    const pos = geometry.attributes.position;
-    const uv = geometry.attributes.uv;
-
-    for (let i = 0; i < pos.count; i++) {
-      let x = pos.getX(i);
-      let y = pos.getY(i);
-      let z = pos.getZ(i);
-
-      let angle = Math.atan2(y, x); 
-      let radius = Math.sqrt(x * x + y * y);
-
-      let u = angle / Math.PI; 
-      let v = radius; 
-
-      if (Math.abs(z) > 0.01) { 
-         uv.setXY(i, u, z * 2); 
-      } else {
-         uv.setXY(i, u, v);
-      }
-    }
-    uv.needsUpdate = true;
-  }
-
-  static get tama() {
-    return this.#TAMA;
-  }
-
-  constructor(gui, titleGui) {
+  constructor() {
     super();
-    
-    this.createGUI(gui, titleGui);
 
-    const texturaColor = new THREE.TextureLoader().load('../puerta/textura/PaintedWood005_1K-JPG_Color.jpg');
-    const texturaNormal = new THREE.TextureLoader().load('../puerta/textura/PaintedWood005_1K-JPG_NormalGL.jpg');
-    
-    this.material= new THREE.MeshStandardMaterial({
-      map: texturaColor,
+    const loader = new THREE.TextureLoader();
+    const texturaColor     = loader.load('./textura/PaintedWood005_1K-JPG_Color.jpg');
+    const texturaNormal    = loader.load('./textura/PaintedWood005_1K-JPG_NormalGL.jpg');
+    const texturaRoughness = loader.load('./textura/PaintedWood005_1K-JPG_Roughness.jpg');
 
-      normalMap: texturaNormal,
-      normalScale: new THREE.Vector2(1.2, 1.2),
-
-      roughnessMap: new THREE.TextureLoader().load('../puerta/textura/PaintedWood005_1K-JPG_Roughness.jpg'),
-      roughness: 0.8,
-
-      emissive: 0xff4500,
-      emissiveMap: texturaColor,
-      emissiveIntensity: 2
+    // Todas las texturas en modo repeat para que Three.js las trate igual
+    [texturaColor, texturaNormal, texturaRoughness].forEach(t => {
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
     });
 
-    // Contenedor móvil de la puerta
+    this.material = new THREE.MeshStandardMaterial({
+      map:          texturaColor,
+      normalMap:    texturaNormal,
+      normalScale:  new THREE.Vector2(1.2, 1.2),
+      roughnessMap: texturaRoughness,
+      roughness:    0.8,
+    });
+
     this.movil = new THREE.Object3D();
-    
-    const cuerpo = this.createCuerpo(Puerta.tama);
-    const pomo = this.createPomo(Puerta.tama);
-    
-    this.movil.add(cuerpo);
-    this.movil.add(pomo);
+    this.movil.add(this.createCuerpo(Puerta.tama));
+    this.movil.add(this.createPomo(Puerta.tama));
     this.add(this.movil);
-    
     this.movil.position.set(0, 0, 0);
-    this.scale.set(Puerta.tama * 1.8,Puerta.tama * 1.8,Puerta.tama * 1);
   }
-  
+
   createCuerpo(tama) {
-    var cuerpo = new THREE.Object3D();
+    const cuerpo = new THREE.Object3D();
+    const ancho  = tama * 1.4;
+    const alto   = tama * 2;
+    const radio  = ancho / 2;
 
-    var ancho = tama * 1.4;
-    var alto = tama * 2;
-    var radioSemicirculoSuperior = ancho / 2;
-
-    var shape = new THREE.Shape();
+    const shape = new THREE.Shape();
     shape.moveTo(0, 0);
     shape.lineTo(ancho, 0);
     shape.lineTo(ancho, alto);
-    shape.absarc(ancho / 2, alto, radioSemicirculoSuperior, 0, Math.PI, false);
+    shape.absarc(ancho / 2, alto, radio, 0, Math.PI, false);
     shape.lineTo(0, 0);
 
-    // 3. CAMBIO: EL AGUJERO EN EL SEMICÍRCULO SUPERIOR
-    var radioAgujero = tama * 0.3; 
-    var agujero = new THREE.Path();
-    
-    // Posicionamos el centro del agujero exactamente en (ancho / 2, alto)
-    // Cambiamos los ángulos (de 0 a Math.PI) y activamos el sentido horario (true) para restar la forma
-    agujero.absarc(ancho / 2, alto, radioAgujero, 0, Math.PI, false);
+    const agujero = new THREE.Path();
+    agujero.absarc(ancho / 2, alto, tama * 0.3, 0, Math.PI, false);
     agujero.closePath();
-
     shape.holes.push(agujero);
 
-    var extrudeSettings = {
-        depth: tama * 0.2, 
-        bevelEnabled: false
-    };
+    const geometry = new THREE.ExtrudeGeometry(shape, {
+      depth: tama * 0.2,
+      bevelEnabled: false,
+    });
 
-    var geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    // ── Recomputar UVs para que cubran todo el bounding box ──────────────────
+    // ExtrudeGeometry deja UVs en espacio local del shape (0…ancho, 0…alto+radio).
+    // Los normalizamos al rango [0,1] usando el bounding box real de la geometría.
+    geometry.computeBoundingBox();
+    const bb   = geometry.boundingBox;
+    const sizeX = bb.max.x - bb.min.x;
+    const sizeY = bb.max.y - bb.min.y;
 
-    this.assignCircularUVs(geometry);
+    const uvAttr = geometry.attributes.uv;
+    const posAttr = geometry.attributes.position;
 
-    var mallaShape = new THREE.Mesh(geometry, this.material);
+    for (let i = 0; i < posAttr.count; i++) {
+      const x = posAttr.getX(i);
+      const y = posAttr.getY(i);
+      uvAttr.setXY(
+        i,
+        (x - bb.min.x) / sizeX,   // U: 0 en el borde izquierdo, 1 en el derecho
+        (y - bb.min.y) / sizeY    // V: 0 en la base, 1 en la cima del arco
+      );
+    }
+    uvAttr.needsUpdate = true;
+    // ─────────────────────────────────────────────────────────────────────────
 
-    cuerpo.add(mallaShape);
+    cuerpo.add(new THREE.Mesh(geometry, this.material));
     return cuerpo;
   }
 
   createPomo(tama) {
-    var k = 0.019;
-    var geometry = new THREE.TorusKnotGeometry(1, 10, 267, 3, 15, 1);
-    
-    var torusKnot = new THREE.Mesh(geometry, this.material);
-    var pomo = new THREE.Object3D();
-    
-    torusKnot.scale.set(tama * k, tama * k, tama * (k * 4.5));
-    torusKnot.position.y = tama;
-    torusKnot.position.x = tama * 1.2;
-    torusKnot.position.z = tama*0.1; // Le damos un poco de profundidad para que se vea mejor
+    const k        = 0.019;
+    const geometry = new THREE.TorusKnotGeometry(1, 10, 267, 3, 15, 1);
+    const torusKnot = new THREE.Mesh(geometry, this.material);
+    torusKnot.scale.set(tama * k, tama * k, tama * k * 2);
+    torusKnot.position.set(tama * 1.2, tama, tama * 0.1);
+
+    const pomo = new THREE.Object3D();
     pomo.add(torusKnot);
     return pomo;
   }
 
-  createGUI(gui, titleGui) {
-    this.guiControls = {
-      rotacion: 0
-    };
-    
-    var folder = gui.addFolder(titleGui);
-    folder.add(this.guiControls, 'rotacion', -Math.PI / 2, Math.PI / 2, 0.0001)
-      .name('Apertura : ')
-      .onChange((value) => this.setAngulo(-value));
-  }
-  
-  setAngulo(valor) {
-    this.movil.rotation.y = valor;
-  }
-  
-  update() {
-    // No requiere acciones en el loop de renderizado
-  }
+  setAngulo(valor) { this.movil.rotation.y = valor; }
+  update() {}
 }
 
 export { Puerta }
