@@ -49,11 +49,21 @@ class Puerta extends THREE.Object3D {
     
     this.createGUI(gui, titleGui);
 
-    // MATERIAL ÚNICO negro
-    this.material = new THREE.MeshStandardMaterial({
-      color: 0x000000, 
-      roughness: 0.5,  
-      metalness: 0.1,
+    const texturaColor = new THREE.TextureLoader().load('../puerta/textura/PaintedWood005_1K-JPG_Color.jpg');
+    const texturaNormal = new THREE.TextureLoader().load('../puerta/textura/PaintedWood005_1K-JPG_NormalGL.jpg');
+    
+    this.material= new THREE.MeshStandardMaterial({
+      map: texturaColor,
+
+      normalMap: texturaNormal,
+      normalScale: new THREE.Vector2(1.2, 1.2),
+
+      roughnessMap: new THREE.TextureLoader().load('../puerta/textura/PaintedWood005_1K-JPG_Roughness.jpg'),
+      roughness: 0.8,
+
+      emissive: 0xff4500,
+      emissiveMap: texturaColor,
+      emissiveIntensity: 2
     });
 
     // Contenedor móvil de la puerta
