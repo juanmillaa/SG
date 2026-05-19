@@ -1,5 +1,3 @@
-
-
 // Clases de la biblioteca
 import * as THREE from 'three'
 import { FirstPersonControls } from '../libs/FirstPersonControls.js'
@@ -25,7 +23,7 @@ class MyScene extends THREE.Scene {
     // Colisiones
     this.walls = [];
     this.playerRadius = 0.22;
-    this.playerHeight = 1.6;
+    this.playerHeight = 1;
 
     // Temporizador y estadísticas
     this.gameStartTime = null;
@@ -39,12 +37,14 @@ class MyScene extends THREE.Scene {
 
     // Raycaster reutilizable
     this.raycaster = new THREE.Raycaster();
-    this.raycaster.far = 3.0;
+    this.raycaster.far = 2;
 
     this.renderer = this.createRenderer(myCanvas);
     this.createLights();
+    this.createStars();
     this.createCamera();
     this.createGround();
+    this.createPickupHUD();
 
     // Cargar laberinto
     var laberintoCargado = $.Deferred();
@@ -59,7 +59,114 @@ class MyScene extends THREE.Scene {
       this.initFirstPersonControls();
       this.setupMouseEvents();
       this.startGameTimer();
+
+      // ── Reposicionar antorchas en coordenadas mundo ──────────────
+      const celdas = [
+        [3, 5], [7, 3], [13, 15], [5, 20], [15, 10],
+        [10, 8], [12, 22], [4, 14], [9, 18], [16, 5]
+      ];
+      this.torches.forEach((light, i) => {
+        const pos = new THREE.Vector3();
+        this.laberinto.getMundoFromCelda(celdas[i][0], celdas[i][1], pos);
+        light.position.set(pos.x, 1.5, pos.z);
+      });
     });
+  }
+
+  // ─────────────────────────────────────────────
+  //  HUD DE PICKUPS
+  // ─────────────────────────────────────────────
+
+  createPickupHUD() {
+    // Estilos
+    const style = document.createElement('style');
+    style.textContent = `
+      #pickup-hud {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(10,10,26,0.82);
+        border: 1.5px solid rgba(255,170,0,0.7);
+        border-radius: 14px;
+        padding: 8px 16px;
+        z-index: 1000;
+        pointer-events: none;
+      }
+      .pu-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+      .pu-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,170,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        background: rgba(255,255,255,0.04);
+        filter: grayscale(1) opacity(0.3);
+        transition: filter 0.4s, box-shadow 0.4s;
+      }
+      .pu-icon.collected {
+        filter: none;
+        border-color: #ffaa00;
+        background: rgba(255,170,0,0.15);
+        box-shadow: 0 0 8px rgba(255,170,0,0.5);
+      }
+      .pu-label {
+        font-size: 9px;
+        font-family: Arial, sans-serif;
+        color: rgba(255,255,255,0.4);
+        letter-spacing: 0.04em;
+      }
+      .pu-label.collected { color: #ffcc66; }
+      #pu-divider {
+        width: 1px;
+        height: 46px;
+        background: rgba(255,170,0,0.25);
+      }
+      #pu-counter {
+        font-size: 13px;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+        color: #ffaa00;
+        white-space: nowrap;
+        transition: color 0.4s;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Estructura HTML
+    const hud = document.createElement('div');
+    hud.id = 'pickup-hud';
+    hud.innerHTML = `
+      <div class="pu-item">
+        <div class="pu-icon" id="hud-nucleo">💎</div>
+        <span class="pu-label" id="hud-nucleo-label">Núcleo</span>
+      </div>
+      <div class="pu-item">
+        <div class="pu-icon" id="hud-carnivora">🌿</div>
+        <span class="pu-label" id="hud-carnivora-label">Carnívora</span>
+      </div>
+      <div class="pu-item">
+        <div class="pu-icon" id="hud-mosca">🪰</div>
+        <span class="pu-label" id="hud-mosca-label">Mosca</span>
+      </div>
+      <div class="pu-item">
+        <div class="pu-icon" id="hud-llave">🔑</div>
+        <span class="pu-label" id="hud-llave-label">Llave</span>
+      </div>
+      <div id="pu-divider"></div>
+      <span id="pu-counter">0 / 4</span>
+    `;
+    document.body.appendChild(hud);
   }
 
   // ─────────────────────────────────────────────
@@ -163,7 +270,6 @@ class MyScene extends THREE.Scene {
       const hitsPickup = this.raycaster.intersectObjects(pickupsPendientes, true);
 
       if (hitsPickup.length > 0) {
-        // Buscar a qué pickup pertenece el mesh impactado
         const meshImpactado = hitsPickup[0].object;
         const pickup = this.pickups.find(p =>
           !p.recogido && this.perteneceA(meshImpactado, p.obj)
@@ -171,7 +277,7 @@ class MyScene extends THREE.Scene {
 
         if (pickup) {
           this.recogerPickup(pickup);
-          return; // Interacción resuelta
+          return;
         }
       }
     }
@@ -231,7 +337,6 @@ class MyScene extends THREE.Scene {
     this.puertaAbierta = true;
     console.log("🚪 ¡Puerta abierta!");
 
-    // Quitar la puerta de las colisiones para poder pasar
     this.removeFromWalls(this.puerta);
 
     let angulo = 0;
@@ -248,9 +353,34 @@ class MyScene extends THREE.Scene {
   }
 
   updateDisplay() {
-    const statusDiv = document.getElementById('pickups-status');
-    if (statusDiv) {
-      statusDiv.innerHTML = `📦 ${this.pickupsRecogidos.length}/${this.totalPickups}`;
+    // Mapa nombre → id del HUD
+    const map = {
+      '💎 Núcleo': 'nucleo',
+      '🌿 Carnívora': 'carnivora',
+      '🪰 Mosca': 'mosca',
+      '🔑 Llave': 'llave',
+    };
+
+    // Iluminar los iconos de los pickups recogidos
+    this.pickups.forEach(p => {
+      const key = map[p.nombre];
+      if (!key) return;
+      const icon = document.getElementById(`hud-${key}`);
+      const label = document.getElementById(`hud-${key}-label`);
+      if (p.recogido) {
+        icon?.classList.add('collected');
+        label?.classList.add('collected');
+      }
+    });
+
+    // Actualizar contador
+    const counter = document.getElementById('pu-counter');
+    if (counter) {
+      const n = this.pickupsRecogidos.length;
+      counter.textContent = `${n} / ${this.totalPickups}`;
+      if (n === this.totalPickups) {
+        counter.style.color = '#44ff88';
+      }
     }
   }
 
@@ -532,34 +662,45 @@ class MyScene extends THREE.Scene {
   }
 
   createLights() {
-    this.ambientLight = new THREE.AmbientLight('white', 0.5);
+    // ── Luz ambiental mínima (noche de bosque) ──────────────────
+    this.ambientLight = new THREE.AmbientLight(0x0a1a0f, 0.4);
     this.add(this.ambientLight);
 
-    this.mainLight = new THREE.DirectionalLight(0xffffff, 1);
-    this.mainLight.position.set(5, 10, 5);
-    this.add(this.mainLight);
+    // ── Luz solar dinámica (CAMBIA en el tiempo) ─────────────────
+    this.sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    this.sunLight.position.set(10, 15, 5);
+    this.sunLight.castShadow = true;
+    this.sunLight.shadow.mapSize.width = 512;
+    this.sunLight.shadow.mapSize.height = 512;
+    this.sunLight.shadow.camera.near = 0.5;
+    this.sunLight.shadow.camera.far = 60;
+    this.sunLight.shadow.camera.left = -20;
+    this.sunLight.shadow.camera.right = 20;
+    this.sunLight.shadow.camera.top = 20;
+    this.sunLight.shadow.camera.bottom = -20;
+    this.add(this.sunLight);
 
-    this.fillLight = new THREE.PointLight(0x4466cc, 0.3);
-    this.fillLight.position.set(0, -1, 0);
-    this.add(this.fillLight);
+    // ── Luz de luna (complementaria, aparece de noche) ──────────
+    this.moonLight = new THREE.DirectionalLight(0x2244aa, 0.0);
+    this.moonLight.position.set(-10, 12, -5);
+    this.add(this.moonLight);
 
-    this.redLight = new THREE.PointLight(0xff0000, 0.5);
-    this.redLight.position.set(5, 2, 5);
-    this.add(this.redLight);
+    // ── Antorchas distribuidas por el laberinto ──────────────────
+    const torchPositions = [
+      [3, 5], [7, 3], [13, 15], [5, 20], [15, 10],
+      [10, 8], [12, 22], [4, 14], [9, 18], [16, 5]
+    ];
 
-    this.greenLight = new THREE.PointLight(0x00ff00, 0.5);
-    this.greenLight.position.set(-5, 2, 8);
-    this.add(this.greenLight);
+    this.torches = [];
+    torchPositions.forEach((_, i) => {
+      const light = new THREE.PointLight(0xff8822, 1.4, 5.0);
+      light.position.set(0, 1.5, 0);
+      light._offset = i * 2.3;
+      this.add(light);
+      this.torches.push(light);
+    });
 
-    this.blueLight = new THREE.PointLight(0x0000ff, 0.5);
-    this.blueLight.position.set(8, 2, -3);
-    this.add(this.blueLight);
-
-    this.changingLight = new THREE.PointLight(0xffaa00, 0.6);
-    this.changingLight.position.set(0, 3, 0);
-    this.add(this.changingLight);
-
-    console.log("💡 Luces creadas");
+    console.log("💡 Luces de bosque creadas (sol/luna + 10 antorchas)");
   }
 
   createRenderer(myCanvas) {
@@ -570,7 +711,45 @@ class MyScene extends THREE.Scene {
     $(myCanvas).append(renderer.domElement);
     return renderer;
   }
+  createStars() {
+    const starCount = 2000;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(starCount * 3);
+    const sizes = new Float32Array(starCount);
 
+    for (let i = 0; i < starCount; i++) {
+      // Distribuir en esfera grande alrededor del jugador
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(Math.random() * 0.9); // solo hemisferio superior
+      const r = 80;
+
+      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      positions[i * 3 + 1] = r * Math.cos(phi);
+      positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+
+      sizes[i] = 0.5 + Math.random() * 1.5;
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+    const material = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.18,
+      sizeAttenuation: true,
+      transparent: true,
+      opacity: 0.0,
+      depthWrite: false,
+    });
+
+    this.stars = new THREE.Points(geometry, material);
+    this.add(this.stars);
+
+    // Guardar offsets de parpadeo por estrella
+    this.starOffsets = new Float32Array(starCount).map(() => Math.random() * Math.PI * 2);
+
+    console.log("⭐ Estrellas creadas");
+  }
   // ─────────────────────────────────────────────
   //  RESIZE
   // ─────────────────────────────────────────────
@@ -631,17 +810,66 @@ class MyScene extends THREE.Scene {
       this.mosca.update();
     }
 
-    // Animación de luces
-    const time = Date.now() * 0.002;
-    this.redLight.color.setHSL(Math.sin(time) * 0.3 + 0.0, 1, 0.5);
-    this.greenLight.color.setHSL(Math.sin(time + 2) * 0.3 + 0.33, 1, 0.5);
-    this.blueLight.color.setHSL(Math.sin(time + 4) * 0.3 + 0.66, 1, 0.5);
+    // ── Ciclo día/noche ──────────────────────────────────────────
+    const time = Date.now() * 0.001;
+    const cycle = (Math.sin(time * 0.1) + 1) / 2;
 
-    const hue = (time * 0.3) % 1;
-    this.changingLight.color.setHSL(hue, 1, 0.5);
-    this.changingLight.intensity = 0.4 + Math.sin(time * 3) * 0.3;
-    this.changingLight.position.x = Math.sin(time * 0.5) * 3;
-    this.changingLight.position.z = Math.cos(time * 0.7) * 3;
+    // Al final del ciclo día/noche existente, reemplaza las 3 ramas así:
+
+    if (cycle > 0.7) {
+      // Día — estrellas invisibles
+      this.sunLight.color.setRGB(0.95, 1.0, 0.88);
+      this.sunLight.intensity = 1.4;
+      this.ambientLight.color.setRGB(0.1, 0.18, 0.08);
+      this.ambientLight.intensity = 0.35;
+      this.moonLight.intensity = 0.0;
+      if (this.stars) this.stars.material.opacity = 0.0;
+
+    } else if (cycle > 0.4) {
+      // Amanecer/atardecer — estrellas aparecen gradualmente
+      const t = (cycle - 0.4) / 0.3;
+      this.sunLight.color.setRGB(1.0, 0.5 + t * 0.48, 0.15 + t * 0.73);
+      this.sunLight.intensity = 0.5 + t * 0.9;
+      this.ambientLight.color.setRGB(0.12, 0.08, 0.04);
+      this.ambientLight.intensity = 0.12 + t * 0.23;
+      this.moonLight.intensity = 0.0;
+      if (this.stars) this.stars.material.opacity = (1 - t) * 0.7;
+
+    } else {
+      // Noche — estrellas visibles y parpadeando
+      const t = cycle / 0.4;
+      this.sunLight.intensity = t * 0.25;
+      this.sunLight.color.setRGB(0.3 + t * 0.65, 0.4 + t * 0.6, 0.8 + t * 0.08);
+      this.moonLight.intensity = (1 - t) * 0.45;
+      this.ambientLight.color.setRGB(0.02, 0.04, 0.08);
+      this.ambientLight.intensity = 0.06 + (1 - t) * 0.06;
+      if (this.stars) this.stars.material.opacity = 0.7 + (1 - t) * 0.25;
+    }
+
+    // Parpadeo sutil de estrellas (añadir justo después del bloque if/else)
+    if (this.stars && this.stars.material.opacity > 0) {
+      const twinkle = Math.sin(time * 2.1) * 0.04 + Math.sin(time * 5.7) * 0.02;
+      this.stars.material.opacity = Math.min(1, Math.max(0, this.stars.material.opacity + twinkle));
+      // Rotar lentamente el cielo estrellado
+      this.stars.rotation.y = time * 0.002;
+    }
+
+    this.sunLight.position.x = Math.cos(time * 0.008) * 15;
+    this.sunLight.position.y = Math.abs(Math.sin(time * 0.008)) * 20 + 2;
+
+    // ── Parpadeo de antorchas ────────────────────────────────────
+    this.torches.forEach(torch => {
+      const flicker =
+        Math.sin(time * 7.3 + torch._offset) * 0.10 +
+        Math.sin(time * 13.1 + torch._offset) * 0.05 +
+        Math.sin(time * 3.7 + torch._offset) * 0.08;
+
+      torch.intensity = 1.4 + flicker;
+
+      const g = 0.53 + flicker * 0.3;
+      const b = 0.13 + Math.max(0, flicker) * 0.1;
+      torch.color.setRGB(1.0, g, b);
+    });
 
     this.renderer.render(this, this.camera);
     this.renderTopView();

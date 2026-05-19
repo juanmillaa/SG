@@ -55,12 +55,21 @@ class Nucleo extends THREE.Object3D {
       SEGMENTOS_RADIALES
     );
 
-    const textura = new THREE.TextureLoader().load('../nucleoEnergia/fire.jpg');
+  
+    const texturaColor = new THREE.TextureLoader().load('../nucleoEnergia/fuego/Lava005_1K-JPG_Color.jpg');
+    const texturaNormal = new THREE.TextureLoader().load('../nucleoEnergia/fuego/Lava005_1K-JPG_NormalGL.jpg');
 
     this.material_esfera = new THREE.MeshStandardMaterial({
-      map: textura,
+      map: texturaColor,
+
+      normalMap: texturaNormal,
+      normalScale: new THREE.Vector2(1.2, 1.2),
+
+      roughnessMap: new THREE.TextureLoader().load('../nucleoEnergia/fuego/Lava005_1K-JPG_Roughness.jpg'),
+      roughness: 0.8,
+
       emissive: 0xff4500,
-      emissiveMap: textura,
+      emissiveMap: texturaColor,
       emissiveIntensity: 2
     });
 
